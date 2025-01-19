@@ -1,11 +1,14 @@
 import { defineConfig } from 'vite';
 import laravel from 'laravel-vite-plugin';
 import vue from '@vitejs/plugin-vue';
+import path from 'path';
+// import axios from 'axios';
 
 export default defineConfig({
     plugins: [
         laravel({
             input: 'resources/js/app.js',
+            // hotFile: 'storage/vite.hot',
             refresh: true,
         }),
         vue({
@@ -37,6 +40,7 @@ export default defineConfig({
             '@comps': '/resources/js/Components',
             '@css': '/resources/css',
             '@images': '/resources/images',
+            '@': path.resolve(__dirname, 'resources/js'),
         }
     }
 });

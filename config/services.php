@@ -35,4 +35,9 @@ return [
         ],
     ],
 
+    'cmc' => [
+        'api_url' => env('CMC_API_URL'),
+        'api_key' => env('CMC_API_KEY'),
+    ],
+
 ];

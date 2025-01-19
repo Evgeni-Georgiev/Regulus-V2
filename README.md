@@ -16,3 +16,5 @@ Approach steps:
 - npm install
 - 
 - php artisan install:broadcasting
+- composer require laravel/horizon
+- php artisan horizon:install
