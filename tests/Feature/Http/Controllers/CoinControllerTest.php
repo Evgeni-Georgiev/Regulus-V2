@@ -10,7 +10,7 @@ use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
 /**
- * @see \App\Http\Controllers\CoinController
+ * @see \App\Http\Controllers\Api\CoinController
  */
 final class CoinControllerTest extends TestCase
 {
@@ -32,7 +32,7 @@ final class CoinControllerTest extends TestCase
     public function store_uses_form_request_validation(): void
     {
         $this->assertActionUsesFormRequest(
-            \App\Http\Controllers\CoinController::class,
+            \App\Http\Controllers\Api\CoinController::class,
             'store',
             \App\Http\Requests\CoinStoreRequest::class
         );
@@ -95,7 +95,7 @@ final class CoinControllerTest extends TestCase
     public function update_uses_form_request_validation(): void
     {
         $this->assertActionUsesFormRequest(
-            \App\Http\Controllers\CoinController::class,
+            \App\Http\Controllers\Api\CoinController::class,
             'update',
             \App\Http\Requests\CoinUpdateRequest::class
         );

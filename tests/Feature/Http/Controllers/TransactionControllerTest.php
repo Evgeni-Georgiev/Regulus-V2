@@ -2,7 +2,7 @@
 
 namespace Tests\Feature\Http\Controllers;
 
-use App\Models\;
+use App\Models\Coin;
 use App\Models\Portfolio;
 use App\Models\Transaction;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -12,7 +12,7 @@ use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
 /**
- * @see \App\Http\Controllers\TransactionController
+ * @see \App\Http\Controllers\Api\TransactionController
  */
 final class TransactionControllerTest extends TestCase
 {
@@ -34,7 +34,7 @@ final class TransactionControllerTest extends TestCase
     public function store_uses_form_request_validation(): void
     {
         $this->assertActionUsesFormRequest(
-            \App\Http\Controllers\TransactionController::class,
+            \App\Http\Controllers\Api\TransactionController::class,
             'store',
             \App\Http\Requests\TransactionStoreRequest::class
         );
@@ -44,7 +44,7 @@ final class TransactionControllerTest extends TestCase
     public function store_saves(): void
     {
         $portfolio = Portfolio::factory()->create();
-        $coin = ::factory()->create();
+        $coin = Coin::factory()->create();
         $quantity = $this->faker->randomFloat(/** decimal_attributes **/);
         $buy_price = $this->faker->randomFloat(/** decimal_attributes **/);
         $transaction_type = $this->faker->randomElement(/** enum_attributes **/);
@@ -88,7 +88,7 @@ final class TransactionControllerTest extends TestCase
     public function update_uses_form_request_validation(): void
     {
         $this->assertActionUsesFormRequest(
-            \App\Http\Controllers\TransactionController::class,
+            \App\Http\Controllers\Api\TransactionController::class,
             'update',
             \App\Http\Requests\TransactionUpdateRequest::class
         );
@@ -99,7 +99,7 @@ final class TransactionControllerTest extends TestCase
     {
         $transaction = Transaction::factory()->create();
         $portfolio = Portfolio::factory()->create();
-        $coin = ::factory()->create();
+        $coin = Coin::factory()->create();
         $quantity = $this->faker->randomFloat(/** decimal_attributes **/);
         $buy_price = $this->faker->randomFloat(/** decimal_attributes **/);
         $transaction_type = $this->faker->randomElement(/** enum_attributes **/);

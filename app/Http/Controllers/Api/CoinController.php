@@ -1,11 +1,11 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Api;
 
 use App\Enums\Coin\CoinEnum;
+use App\Http\Controllers\Controller;
 use App\Http\Requests\CoinStoreRequest;
 use App\Http\Requests\CoinUpdateRequest;
-use App\Http\Resources\CoinCollection;
 use App\Http\Resources\CoinResource;
 use App\Models\Coin;
 use App\Services\CMCClient;

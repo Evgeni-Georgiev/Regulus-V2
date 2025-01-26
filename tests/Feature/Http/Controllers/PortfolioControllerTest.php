@@ -11,7 +11,7 @@ use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
 /**
- * @see \App\Http\Controllers\PortfolioController
+ * @see \App\Http\Controllers\Api\PortfolioController
  */
 final class PortfolioControllerTest extends TestCase
 {
@@ -33,7 +33,7 @@ final class PortfolioControllerTest extends TestCase
     public function store_uses_form_request_validation(): void
     {
         $this->assertActionUsesFormRequest(
-            \App\Http\Controllers\PortfolioController::class,
+            \App\Http\Controllers\Api\PortfolioController::class,
             'store',
             \App\Http\Requests\PortfolioStoreRequest::class
         );
@@ -78,7 +78,7 @@ final class PortfolioControllerTest extends TestCase
     public function update_uses_form_request_validation(): void
     {
         $this->assertActionUsesFormRequest(
-            \App\Http\Controllers\PortfolioController::class,
+            \App\Http\Controllers\Api\PortfolioController::class,
             'update',
             \App\Http\Requests\PortfolioUpdateRequest::class
         );
