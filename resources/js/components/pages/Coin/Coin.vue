@@ -3,9 +3,6 @@ import { ref, onMounted, onBeforeUnmount } from 'vue';
 import axios from 'axios';
 import echo from '@/echo';
 
-import Header from '@comps/Header.vue';
-import Footer from '@comps/Footer.vue';
-
 // State
 const coinsData = ref([]);
 const updatedFields = ref({});
@@ -113,8 +110,6 @@ onBeforeUnmount(() => {
     console.log('Successfully left channel.');
 });
 </script>
-
-
 
 <template>
     <div class="flex flex-col min-h-screen">
