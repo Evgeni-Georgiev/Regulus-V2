@@ -1,5 +1,7 @@
 <script setup>
 import Logo from '@comps/Logo.vue';
+import config from "tailwindcss/defaultConfig";
+import { HOME_URL } from "../constants";
 </script>
 
 <template>
@@ -10,6 +12,7 @@ import Logo from '@comps/Logo.vue';
 
             <!-- Navigation Links -->
 <!--            <nav class="hidden md:flex space-x-4">-->
+                <a :href="HOME_URL" class="hover:text-gray-400">Home</a>
                 <a href="/coins" class="hover:text-gray-400">Cryptocurrencies</a>
 <!--                <a href="/dexscan" class="hover:text-gray-400">DexScan</a>-->
 <!--                <a href="/exchanges" class="hover:text-gray-400">Exchanges</a>-->
