@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Portfolio extends Model
@@ -39,5 +40,18 @@ class Portfolio extends Model
     public function transactions(): HasMany
     {
         return $this->hasMany(Transaction::class);
+    }
+
+    /**
+     * A Portfolio can have many Coins(Assets) to track statistics on.
+     * Define the many-to-many relationship with coins.
+     *
+     * @return BelongsToMany
+     */
+    public function coins(): BelongsToMany
+    {
+        return $this->BelongsToMany(Coin::class, 'portfolio_coins')
+            ->withPivot('quantity')
+            ->withTimestamps();
     }
 }

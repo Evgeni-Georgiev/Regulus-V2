@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 class Coin extends Model
 {
@@ -39,6 +40,16 @@ class Coin extends Model
         'percent_change_7d' => 'decimal:2',
         'volume_24h' => 'decimal:2',
     ];
+
+    /**
+     * Define the many-to-many relationship with portfolios.
+     */
+    public function portfolios(): BelongsToMany
+    {
+        return $this->belongsToMany(Portfolio::class, 'portfolio_coins')
+            ->withPivot('quantity')
+            ->withTimestamps();
+    }
 
     public function getMarketCapFormatAttribute(): string
     {
