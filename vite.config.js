@@ -37,7 +37,7 @@ export default defineConfig({
     },
     resolve: {
         alias: {
-            '@comps': '/resources/js/Components',
+            '@comps': '/resources/js/components',
             '@css': '/resources/css',
             '@images': '/resources/images',
             '@': path.resolve(__dirname, 'resources/js'),
