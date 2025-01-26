@@ -1,15 +1,17 @@
 <template>
     <div id="app">
         <Header />
-        <!-- Route View -->
-        <router-view />
+        <main>
+            <!-- Route View -->
+            <router-view />
+        </main>
         <Footer />
     </div>
 </template>
 
 <script>
-import Header from "./Components/Header.vue";
-import Footer from "./Components/Footer.vue";
+import Header from "@comps/Header.vue";
+import Footer from "@comps/Footer.vue";
 
 export default {
     name: 'App',
@@ -18,7 +20,6 @@ export default {
 </script>
 
 <style>
-/* Example Styling */
 nav ul {
     list-style: none;
     padding: 0;
