@@ -9,17 +9,15 @@ use App\Http\Requests\CoinUpdateRequest;
 use App\Http\Resources\CoinResource;
 use App\Models\Coin;
 use App\Services\CMCClient;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 
 class CoinController extends Controller
 {
-    public function index(Request $request): \Illuminate\Http\JsonResponse
+    public function index(Request $request): JsonResponse
     {
-//        $coins = Coin::all();
-//
-//        return new CoinCollection($coins);
-        $filterCoin = (new CMCClient())->getCoinData()
+        $filterCoin = app(CMCClient::class)->getCoinData()
             ->take(CoinEnum::PAGINATE_LIMIT_COIN_15);
 
         return response()->json([
