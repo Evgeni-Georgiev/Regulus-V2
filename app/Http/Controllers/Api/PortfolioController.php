@@ -83,7 +83,7 @@ class PortfolioController extends Controller
                 'price' => $apiCoin['price'],
                 'fiat_spent_on_quantity' => $currentInvestmentCoinValue,
                 'total_holding_quantity' => $coinTransactions->sum('quantity'),
-                'average_buy_price' => $averageBuyPrice, // Average buy price
+                'average_buy_price' => $averageBuyPrice,
                 'transactions' => $coinTransactions->map(function ($transaction) {
                     return [
                         'id' => $transaction->id,
@@ -97,10 +97,8 @@ class PortfolioController extends Controller
             ];
         })->filter(); // Remove null entries for invalid coins
 
-        // Calculate the total value of the portfolio (sum of all transactions)
-        $totalPortfolioValue = $groupedTransactions->reduce(function ($sum, $group) {
-            return $sum + collect($group['transactions'])->sum('total_price');
-        }, 0);
+        // Calculate the total value of the portfolio
+        $totalPortfolioValue = $groupedTransactions->sum('fiat_spent_on_quantity');
 
         return response()->json([
             'portfolio' => [

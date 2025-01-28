@@ -5,8 +5,7 @@
             <!-- Portfolio Overview -->
             <div class="bg-white shadow-md rounded-lg p-6 mb-6">
                 <h1 class="text-4xl font-bold text-gray-800">Portfolio: {{ portfolio.name }}</h1>
-                <p class="text-2xl text-green-500 mt-4">Total Value: ${{ portfolio.total_value.toFixed(2) }}
-                    <span style="color:crimson">(Volatile)</span> </p><!-- TODO: "Total Value" is volatile based on transaction data and current market price of coins!  -->
+                <p class="text-2xl text-green-500 mt-4">Total Value: ${{ portfolio.total_value.toFixed(2) }}</p>
             </div>
 
             <!-- Coins Section -->
