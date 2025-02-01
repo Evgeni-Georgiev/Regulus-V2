@@ -15,12 +15,12 @@ return new class extends Migration
             $table->id();
             $table->string('name', 255);
             $table->string('symbol', 20)->unique();
-            $table->decimal('price', 20, 2);
-            $table->decimal('market_cap', 20, 2);
-            $table->decimal('percent_change_1h', 8, 2);
-            $table->decimal('percent_change_24h', 8, 2);
-            $table->decimal('percent_change_7d', 8, 2);
-            $table->decimal('volume_24h', 20, 2);
+            $table->float('price', 20);
+            $table->float('market_cap', 20);
+            $table->float('percent_change_1h', 8);
+            $table->float('percent_change_24h', 8);
+            $table->float('percent_change_7d', 8);
+            $table->float('volume_24h', 20);
             $table->index('symbol');
             $table->timestamps();
         });
