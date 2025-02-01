@@ -13,27 +13,26 @@
                 <h2 class="text-3xl font-semibold mb-6 text-gray-800">Coins</h2>
                 <div v-for="coin in portfolio.coins" :key="coin.symbol" class="bg-white shadow-md rounded-lg p-6 mb-6">
                     <h3 class="text-2xl font-medium text-gray-700 mb-4">
-                        <!-- TODO: Must be APi fetch current Coin price -->
-                        {{ coin.name }} ({{ coin.symbol }}) - ${{ coin.price }}
+                        {{ coin.name }} ({{ coin.symbol }}) - ${{ coin.price.toFixed(4) }}
                     </h3>
                     <table class="w-full border-collapse">
                         <thead>
                         <tr class="bg-gray-100 text-left">
-                            <th class="py-2 px-4 border-b">Date</th>
+                            <th class="py-2 px-4 border-b">Name</th>
                             <th class="py-2 px-4 border-b">Type</th>
-                            <th class="py-2 px-4 border-b">Current Price(Volatile)</th>
+                            <th class="py-2 px-4 border-b">Current Price</th>
                             <th class="py-2 px-4 border-b">Total Holding</th>
-                            <th class="py-2 px-4 border-b">Avg. Buy Price</th> <!-- TODO: Given Coin avg. price(Non-volatile) -->
+                            <th class="py-2 px-4 border-b">Avg. Buy Price</th>
                             <th class="py-2 px-4 border-b">Add Transaction</th>
                             <th class="py-2 px-4 border-b">Actions</th>
                         </tr>
                         </thead>
                         <tbody>
                         <tr class="hover:bg-gray-50">
-                            <td class="py-2 px-4 border-b">{{ coin.created_at }}</td>
+                            <td class="py-2 px-4 border-b">{{ coin.name }}</td>
                             <td class="py-2 px-4 border-b capitalize">{{ coin.symbol }}</td>
-                            <td class="py-2 px-4 border-b capitalize">{{ coin.price }}</td>
-                            <td class="py-2 px-4 border-b capitalize">{{ coin.total_holding_quantity }} - {{ coin.symbol }}, ${{ coin.fiat_spent_on_quantity }}</td> <!--TODO: Describe better - currently this quantity based on the current price is -->
+                            <td class="py-2 px-4 border-b capitalize">{{ coin.price.toFixed(4) }}</td>
+                            <td class="py-2 px-4 border-b capitalize">{{ coin.total_holding_quantity }} - {{ coin.symbol }}, ${{ coin.fiat_spent_on_quantity.toFixed(4) }}</td> <!--TODO: Describe better - currently this quantity based on the current price is -->
                             <td class="py-2 px-4 border-b">{{ coin.average_buy_price.toFixed(3) }}</td>
                             <td class="py-2 px-4 border-b"><!-- TODO: Add transaction - open modal --></td>
                             <td class="py-2 px-4 border-b"><!-- TODO: Actions - View transactions, Move asset to another portfolio, remove asset from portfolio --></td>
@@ -54,7 +53,7 @@
                         <th class="py-2 px-4 border-b">Type</th>
                         <th class="py-2 px-4 border-b">Quantity</th>
                         <th class="py-2 px-4 border-b">Price</th>
-                        <th class="py-2 px-4 border-b">Value</th> <!-- TODO: Total price that was spent in Fiat for the given transactions -->
+                        <th class="py-2 px-4 border-b">Value</th> <!-- TODO: Total price that was spent in Fiat for the given transactions - Complete -->
                     </tr>
                     </thead>
                     <tbody v-for="coin in portfolio.coins" :key="coin.symbol" class="hover:bg-gray-50">

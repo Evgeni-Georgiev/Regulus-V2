@@ -20,7 +20,6 @@ class PortfolioController extends Controller
         $this->cmcClient = $cmcClient;
     }
 
-
     public function index(Request $request)
     {
         $portfolios = Portfolio::all();
@@ -37,11 +36,17 @@ class PortfolioController extends Controller
 
     public function show(Request $request, Portfolio $portfolio)
     {
+        // TODO: Optimize method logic - extract in service class.
+
+        // Fetch coins data from API
+        $coinData = $this->cmcClient->getCoinData();
+
         // Fetch transactions with their related coins for the given portfolio
         $transactions = $portfolio->transactions()->with('coin')->get();
 
         // Group transactions by coin and include related coin details
-        $groupedTransactions = $transactions->groupBy('coin_id')->map(function ($transactions) {
+        $groupedTransactions = $transactions->groupBy('coin_id')
+            ->map(function ($transactions) use ($coinData) {
             // Get the first transaction to fetch coin details
             $firstTransaction = $transactions->first();
 
@@ -49,6 +54,12 @@ class PortfolioController extends Controller
             $coin = $firstTransaction->coin;
             if (!$coin) {
                 return null;
+            }
+
+            // Check if the coin exists in the API data
+            $apiCoin = $coinData[$coin->symbol] ?? null;
+            if (!$apiCoin) {
+                return null; // Skip coin if not found in API
             }
 
             // Filter transactions for the current coin
@@ -63,16 +74,16 @@ class PortfolioController extends Controller
             }, 0);
             $averageBuyPrice = $totalQuantity > 0 ? $totalCost / $totalQuantity : 0;
 
-            $currentInvestmentCoinValue = $totalQuantity * $coin->price;
+            $currentInvestmentCoinValue = $totalQuantity * $apiCoin['price'];
 
             return [
                 'id' => $coin->id,
-                'symbol' => $coin->symbol,
-                'name' => $coin->name,
-                'price' => $coin->price,
+                'symbol' => $apiCoin['symbol'],
+                'name' => $apiCoin['name'],
+                'price' => $apiCoin['price'],
                 'fiat_spent_on_quantity' => $currentInvestmentCoinValue,
                 'total_holding_quantity' => $coinTransactions->sum('quantity'),
-                'average_buy_price' => $averageBuyPrice, // Average buy price
+                'average_buy_price' => $averageBuyPrice,
                 'transactions' => $coinTransactions->map(function ($transaction) {
                     return [
                         'id' => $transaction->id,
@@ -86,10 +97,8 @@ class PortfolioController extends Controller
             ];
         })->filter(); // Remove null entries for invalid coins
 
-        // Calculate the total value of the portfolio (sum of all transactions)
-        $totalPortfolioValue = $groupedTransactions->reduce(function ($sum, $group) {
-            return $sum + collect($group['transactions'])->sum('total_price');
-        }, 0);
+        // Calculate the total value of the portfolio
+        $totalPortfolioValue = $groupedTransactions->sum('fiat_spent_on_quantity');
 
         return response()->json([
             'portfolio' => [
