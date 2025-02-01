@@ -37,7 +37,7 @@ class CMCClient
 
     private const CACHE_DURATIONS = [
         'API_RESPONSE' => 180, // 3 minutes
-        'COINS_DATA' => 300,   // 5 minutes
+        'COINS_DATA' => 14400, // 4 hours
     ];
 
     /**
@@ -88,6 +88,12 @@ class CMCClient
                 fn() => $this->fetchDynamicDataFromApi()
             );
 
+            // Validate dynamic data
+            if (!$this->isValidData($dynamicData)) {
+                Log::warning("API returned invalid or zero dynamic data. Falling back to database.");
+                return $this->getCoinsFromDatabase();
+            }
+
             return $staticData->map(function ($coin, $symbol) use ($dynamicData) {
                 return array_merge($coin, [
                     'price' => $dynamicData[$symbol]['price'] ?? 0,
@@ -115,16 +121,17 @@ class CMCClient
         try {
             $response = $this->sendAPIRequest();
 
-            if ($response->successful()) {
-                return collect($response->json('data'))->mapWithKeys(fn($coin) => [
-                    $coin['symbol'] => [
-                        'name' => $coin['name'],
-                        'symbol' => $coin['symbol'],
-                    ],
-                ]);
+            if (!$response->successful() || empty($response->json('data'))) {
+                throw new Exception("Invalid API response: Empty static data.");
             }
 
-            throw new Exception("API response unsuccessful.");
+            return collect($response->json('data'))->mapWithKeys(fn($coin) => [
+                $coin['symbol'] => [
+                    'name' => $coin['name'],
+                    'symbol' => $coin['symbol'],
+                ],
+            ]);
+
         } catch (Exception $e) {
             Log::error('Failed to fetch static data from API: ' . $e->getMessage());
             return $this->getStaticDataFromDatabase();
@@ -166,25 +173,36 @@ class CMCClient
         try {
             $response = $this->sendAPIRequest();
 
-            if ($response->successful()) {
-                return collect($response->json('data'))->mapWithKeys(fn($coin) => [
-                    $coin['symbol'] => [
-                        'price' => $coin['quote']['USD']['price'] ?? 0,
-                        'market_cap' => $coin['quote']['USD']['market_cap'] ?? 0,
-                        'percent_change_1h' => $coin['quote']['USD']['percent_change_1h'] ?? 0,
-                        'percent_change_24h' => $coin['quote']['USD']['percent_change_24h'] ?? 0,
-                        'percent_change_7d' => $coin['quote']['USD']['percent_change_7d'] ?? 0,
-                        'volume_24h' => $coin['quote']['USD']['volume_24h'] ?? 0,
-                    ],
-                ]);
+            if (!$response->successful() || empty($response->json('data'))) {
+                throw new Exception("Invalid API response: Empty dynamic data.");
             }
 
-            Log::warning('API Response was not successful, falling back to database.');
-            return $this->getDynamicDataFromDatabase();
+            $data = collect($response->json('data'))->mapWithKeys(fn($coin) => [
+                $coin['symbol'] => [
+                    'price' => $coin['quote']['USD']['price'] ?? 0,
+                    'market_cap' => $coin['quote']['USD']['market_cap'] ?? 0,
+                    'percent_change_1h' => $coin['quote']['USD']['percent_change_1h'] ?? 0,
+                    'percent_change_24h' => $coin['quote']['USD']['percent_change_24h'] ?? 0,
+                    'percent_change_7d' => $coin['quote']['USD']['percent_change_7d'] ?? 0,
+                    'volume_24h' => $coin['quote']['USD']['volume_24h'] ?? 0,
+                ],
+            ]);
+
+            if (!$this->isValidData($data)) {
+                throw new Exception("API returned only zero values.");
+            }
+
+            return $data;
+
         } catch (Exception $e) {
             Log::error('Failed to fetch fresh data from API: ' . $e->getMessage());
-            return collect();
+            return $this->getDynamicDataFromDatabase();
         }
+    }
+
+    private function isValidData(Collection $coins): bool
+    {
+        return $coins->isNotEmpty() && $coins->filter(fn($coin) => $coin['price'] > 0)->isNotEmpty();
     }
 
     /**
