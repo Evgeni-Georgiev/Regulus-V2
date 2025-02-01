@@ -33,12 +33,12 @@ class Coin extends Model
      */
     protected $casts = [
         'id' => 'integer',
-        'price' => 'decimal:2',
-        'market_cap' => 'decimal:2',
-        'percent_change_1h' => 'decimal:2',
-        'percent_change_24h' => 'decimal:2',
-        'percent_change_7d' => 'decimal:2',
-        'volume_24h' => 'decimal:2',
+        'price' => 'float',
+        'market_cap' => 'float',
+        'percent_change_1h' => 'float',
+        'percent_change_24h' => 'float',
+        'percent_change_7d' => 'float',
+        'volume_24h' => 'float',
     ];
 
     /**

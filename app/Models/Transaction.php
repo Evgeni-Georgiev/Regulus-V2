@@ -32,8 +32,8 @@ class Transaction extends Model
         'id' => 'integer',
         'portfolio_id' => 'integer',
         'coin_id' => 'integer',
-        'quantity' => 'decimal:8',
-        'buy_price' => 'decimal:8',
+        'quantity' => 'float',
+        'buy_price' => 'float',
     ];
 
     public function portfolio(): BelongsTo

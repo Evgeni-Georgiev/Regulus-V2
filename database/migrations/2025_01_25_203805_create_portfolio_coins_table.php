@@ -15,7 +15,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('portfolio_id')->constrained()->cascadeOnDelete();
             $table->foreignId('coin_id')->constrained()->cascadeOnDelete();
-            $table->decimal('quantity', 18, 8)->default(0);
+            $table->float('quantity', 18)->default(0);
             $table->timestamps();
         });
     }

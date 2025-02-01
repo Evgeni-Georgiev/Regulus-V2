@@ -15,9 +15,9 @@ return new class extends Migration
             $table->id();
             $table->foreignId('portfolio_id');
             $table->foreignId('coin_id');
-            $table->decimal('quantity', 18, 8);
-            $table->decimal('buy_price', 18, 8);
-            $table->enum('transaction_type', ["buy","sell"]);
+            $table->float('quantity', 18);
+            $table->float('buy_price', 18);
+            $table->enum('transaction_type', ["buy","sell"])->default('buy');
             $table->timestamps();
         });
     }
