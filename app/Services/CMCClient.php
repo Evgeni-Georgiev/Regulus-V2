@@ -37,7 +37,8 @@ class CMCClient
 
     private const CACHE_DURATIONS = [
         'API_RESPONSE' => 180, // 3 minutes
-        'COINS_DATA' => 14400, // 4 hours
+        'COINS_DATA_STATIC' => 14400, // 14400 - 4 hours 900 - 15 min
+        'COINS_DATA_DYNAMIC' => 15, // 15 seconds
     ];
 
     /**
@@ -79,12 +80,12 @@ class CMCClient
         try {
             $staticData = $this->cacheApiData(
                 self::CACHE_KEYS['COINS_DATA_STATIC'],
-                now()->addMinutes(15),
+                self::CACHE_DURATIONS['COINS_DATA_STATIC'],
                 fn() => $this->fetchStaticDataFromApi()
             );
             $dynamicData = $this->cacheApiData(
                 self::CACHE_KEYS['COINS_DATA'],
-                15,
+                self::CACHE_DURATIONS['COINS_DATA_DYNAMIC'],
                 fn() => $this->fetchDynamicDataFromApi()
             );
 
@@ -142,14 +143,14 @@ class CMCClient
      * Caches API data if new data is fetched, or returns cached data.
      *
      * @param string $cacheKey The cache key.
-     * @param \DateTime|int $cacheDuration The duration to keep the data in the cache.
+     * @param int $cacheDuration The duration to keep the data in the cache.
      * @param callable $fetchDataFromApi A callable to fetch fresh data.
      * @return Collection The cached or fresh data as a collection.
      *
      * @throws ContainerExceptionInterface
      * @throws NotFoundExceptionInterface
      */
-    private function cacheApiData(string $cacheKey, \DateTime|int $cacheDuration, callable $fetchDataFromApi): Collection
+    private function cacheApiData(string $cacheKey, int $cacheDuration, callable $fetchDataFromApi): Collection
     {
         $cachedData = cache()->get($cacheKey);
         $newData = $fetchDataFromApi();
