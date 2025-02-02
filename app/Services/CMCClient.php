@@ -37,7 +37,7 @@ class CMCClient
 
     private const CACHE_DURATIONS = [
         'API_RESPONSE' => 180, // 3 minutes
-        'COINS_DATA_STATIC' => 14400, // 14400 - 4 hours 900 - 15 min
+        'COINS_DATA_STATIC' => 14400, // 14400 - 4 hours, 900 - 15 min
         'COINS_DATA_DYNAMIC' => 15, // 15 seconds
     ];
 
