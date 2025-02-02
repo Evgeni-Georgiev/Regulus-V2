@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Enums\CMCResponseStatusEnum;
+use App\Models\ApiFetchLog;
 use App\Models\Coin;
 use Exception;
 use Illuminate\Http\Client\ConnectionException;
@@ -37,7 +38,8 @@ class CMCClient
 
     private const CACHE_DURATIONS = [
         'API_RESPONSE' => 180, // 3 minutes
-        'COINS_DATA' => 14400, // 4 hours
+        'COINS_DATA_DYNAMIC' => 300, // 5 minutes
+        'COINS_DATA_STATIC' => 14400, // 4 hours
     ];
 
     /**
@@ -79,7 +81,7 @@ class CMCClient
         try {
             $staticData = $this->cacheApiData(
                 self::CACHE_KEYS['COINS_DATA_STATIC'],
-                now()->addMinutes(15),
+                now()->addSeconds(14400), // 4 hours
                 fn() => $this->fetchStaticDataFromApi()
             );
             $dynamicData = $this->cacheApiData(
@@ -88,24 +90,48 @@ class CMCClient
                 fn() => $this->fetchDynamicDataFromApi()
             );
 
-            // Validate dynamic data
-            if (!$this->isValidData($dynamicData)) {
-                Log::warning("API returned invalid or zero dynamic data. Falling back to database.");
-                return $this->getCoinsFromDatabase();
+            // If API fetch was successful and data is valid, log it and return data
+            if ($this->isValidData($dynamicData)) {
+                ApiFetchLog::create([
+                    'type' => 'API',
+                    'source' => config('services.cmc.api_url'),
+                    'success' => true,
+                    'error_message' => null
+                ]);
+
+                return $staticData->map(function ($coin, $symbol) use ($dynamicData) {
+                    return array_merge($coin, [
+                        'price' => $dynamicData[$symbol]['price'] ?? 0,
+                        'market_cap' => $dynamicData[$symbol]['market_cap'] ?? 0,
+                        'percent_change_1h' => $dynamicData[$symbol]['percent_change_1h'] ?? 0,
+                        'percent_change_24h' => $dynamicData[$symbol]['percent_change_24h'] ?? 0,
+                        'percent_change_7d' => $dynamicData[$symbol]['percent_change_7d'] ?? 0,
+                        'volume_24h' => $dynamicData[$symbol]['volume_24h'] ?? 0,
+                    ]);
+                });
             }
 
-            return $staticData->map(function ($coin, $symbol) use ($dynamicData) {
-                return array_merge($coin, [
-                    'price' => $dynamicData[$symbol]['price'] ?? 0,
-                    'market_cap' => $dynamicData[$symbol]['market_cap'] ?? 0,
-                    'percent_change_1h' => $dynamicData[$symbol]['percent_change_1h'] ?? 0,
-                    'percent_change_24h' => $dynamicData[$symbol]['percent_change_24h'] ?? 0,
-                    'percent_change_7d' => $dynamicData[$symbol]['percent_change_7d'] ?? 0,
-                    'volume_24h' => $dynamicData[$symbol]['volume_24h'] ?? 0,
-                ]);
-            });
+            // If fresh API data is invalid, log failure and fallback to database
+            Log::warning("API returned invalid or zero dynamic data. Falling back to database.");
+
+            ApiFetchLog::create([
+                'type' => 'API',
+                'source' => config('services.cmc.api_url'),
+                'success' => false,
+                'error_message' => "API returned zero values."
+            ]);
+
+            return $this->getCoinsFromDatabase();
         } catch (Exception $e) {
             Log::error('Error fetching coins: ' . $e->getMessage());
+
+            ApiFetchLog::create([
+                'type' => 'API',
+                'source' => config('services.cmc.api_url'),
+                'success' => false,
+                'error_message' => $e->getMessage()
+            ]);
+
             return $this->getCoinsFromDatabase();
         }
     }
@@ -246,6 +272,13 @@ class CMCClient
      */
     private function getCoinsFromDatabase(): Collection
     {
+        ApiFetchLog::create([
+            'type' => 'Database',
+            'source' => 'Database',
+            'success' => true,
+            'error_message' => null
+        ]);
+
         return Coin::all()->mapWithKeys(function ($coin) {
             return [
                 $coin->symbol => [
