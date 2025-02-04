@@ -90,25 +90,9 @@ class CMCClient
                 fn() => $this->fetchDynamicDataFromApi()
             );
 
-            // If API fetch was successful and data is valid, log it and return data
-            if ($this->isValidData($dynamicData)) {
-                ApiFetchLog::create([
-                    'type' => 'API',
-                    'source' => config('services.cmc.api_url'),
-                    'success' => true,
-                    'error_message' => null
-                ]);
-
-                return $staticData->map(function ($coin, $symbol) use ($dynamicData) {
-                    return array_merge($coin, [
-                        'price' => $dynamicData[$symbol]['price'] ?? 0,
-                        'market_cap' => $dynamicData[$symbol]['market_cap'] ?? 0,
-                        'percent_change_1h' => $dynamicData[$symbol]['percent_change_1h'] ?? 0,
-                        'percent_change_24h' => $dynamicData[$symbol]['percent_change_24h'] ?? 0,
-                        'percent_change_7d' => $dynamicData[$symbol]['percent_change_7d'] ?? 0,
-                        'volume_24h' => $dynamicData[$symbol]['volume_24h'] ?? 0,
-                    ]);
-                });
+            // If fresh API data is invalid, log failure and fallback to database
+            if($this->isValidData($dynamicData)) {
+                return $this->mergeAPICoinData($staticData, $dynamicData);
             }
 
             // If fresh API data is invalid, log failure and fallback to database
@@ -125,15 +109,37 @@ class CMCClient
         } catch (Exception $e) {
             Log::error('Error fetching coins: ' . $e->getMessage());
 
-            ApiFetchLog::create([
-                'type' => 'API',
-                'source' => config('services.cmc.api_url'),
-                'success' => false,
-                'error_message' => $e->getMessage()
-            ]);
-
             return $this->getCoinsFromDatabase();
         }
+    }
+
+    /**
+     * Maps over the collection of ($staticData) and merges it by attribute 'symbol' with the dynamic data ($dynamicData).
+     *
+     * @param Collection $staticData Collection of static non-volatile data fetched from the api like name or symbol.
+     * @param Collection $dynamicData Collection of dynamic highly volatile data fetched from the api like price data.
+     * @return Collection
+     */
+    private function mergeAPICoinData(Collection $staticData, Collection $dynamicData): Collection
+    {
+        // If API fetch was successful and data is valid, log it and return data
+        ApiFetchLog::create([
+            'type' => 'API',
+            'source' => config('services.cmc.api_url'),
+            'success' => true,
+            'error_message' => null
+        ]);
+
+        return $staticData->map(function ($coin, $symbol) use ($dynamicData) {
+            return array_merge($coin, [
+                'price' => $dynamicData[$symbol]['price'] ?? 0,
+                'market_cap' => $dynamicData[$symbol]['market_cap'] ?? 0,
+                'percent_change_1h' => $dynamicData[$symbol]['percent_change_1h'] ?? 0,
+                'percent_change_24h' => $dynamicData[$symbol]['percent_change_24h'] ?? 0,
+                'percent_change_7d' => $dynamicData[$symbol]['percent_change_7d'] ?? 0,
+                'volume_24h' => $dynamicData[$symbol]['volume_24h'] ?? 0,
+            ]);
+        });
     }
 
     /**
@@ -275,8 +281,8 @@ class CMCClient
         ApiFetchLog::create([
             'type' => 'Database',
             'source' => 'Database',
-            'success' => true,
-            'error_message' => null
+            'success' => false,
+            'error_message' => 'Fail API fetch, backup to database.'
         ]);
 
         return Coin::all()->mapWithKeys(function ($coin) {
