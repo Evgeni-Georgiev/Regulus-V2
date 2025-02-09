@@ -17,11 +17,14 @@ class CoinController extends Controller
 {
     public function index(Request $request): JsonResponse
     {
-        $filterCoin = app(CMCClient::class)->getCoinData()
+        $coinService = app(CMCClient::class);
+
+        $filterCoin = $coinService->getCoinData()
             ->take(CoinEnum::PAGINATE_LIMIT_COIN_15);
 
         return response()->json([
-            'coins' => $filterCoin->values()->toArray()
+            'coins' => $filterCoin->values()->toArray(),
+            'dataSource' => $coinService->getDataSource()
         ]);
     }
 

@@ -7,6 +7,7 @@ import echo from '@/echo';
 const coinsData = ref([]);
 const updatedFields = ref({});
 const isLoading = ref(false);
+const dataSource = ref('');
 
 // Helper Functions
 const updateCoinData = (updatedCoins) => {
@@ -70,7 +71,9 @@ const fetchCoins = async () => {
         const response = await axios.get('/api/coins');
         console.log('API response:', response.data);
         coinsData.value = response.data.coins;
+        dataSource.value = response.data.dataSource;
         console.log('Updated coinsData:', coinsData.value);
+        console.log('Source:', dataSource.value);
     } catch (error) {
         console.error('Error fetching coin data:', error);
     } finally {
@@ -92,6 +95,7 @@ const listenForPriceUpdates = () => {
 
         console.log('Parsed real-time updatedCoinsArray:', updatedCoinsArray);
         updateCoinData(updatedCoinsArray);
+        dataSource.value = 'API';
     });
 };
 
@@ -113,6 +117,10 @@ onBeforeUnmount(() => {
 
 <template>
     <div class="flex flex-col min-h-screen">
+        <!-- Data Source Indicator -->
+<!--        <div class="text-sm text-gray-500 mb-4">-->
+<!--            Data Source: {{ dataSource }}-->
+<!--        </div>-->
         <!-- Header -->
         <div v-if="isLoading" class="text-sm text-gray-500">Updating...</div>
 
