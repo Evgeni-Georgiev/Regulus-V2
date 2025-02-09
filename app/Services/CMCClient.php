@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Enums\CMCResponseStatusEnum;
+use App\Events\CoinPriceUpdated;
 use App\Models\ApiFetchLog;
 use App\Models\Coin;
 use Exception;
@@ -11,8 +12,6 @@ use Illuminate\Http\Client\Response;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
-use Psr\Container\ContainerExceptionInterface;
-use Psr\Container\NotFoundExceptionInterface;
 
 /**
  * Class CMCClient
@@ -31,15 +30,13 @@ class CMCClient
     protected CMCResponseStatusEnum $responseState = CMCResponseStatusEnum::SUCCESS;
 
     private const CACHE_KEYS = [
-        'API_RESPONSE' => 'cmc.api.response',
-        'COINS_DATA_STATIC' => 'cmc.coins.data.static',
-        'COINS_DATA' => 'cmc.coins.data',
+        'API_FRESH_DATA' => 'cmc.api.fresh.data',
+        'API_CACHED_DATA' => 'cmc.api.cached.data',
     ];
 
     private const CACHE_DURATIONS = [
-        'API_RESPONSE' => 180, // 3 minutes
-        'COINS_DATA_STATIC' => 14400, // 14400 - 4 hours, 900 - 15 min
-        'COINS_DATA_DYNAMIC' => 15, // 15 seconds
+        'FRESH_DATA' => 15, // 15 seconds for fresh API data to be cached
+        'CACHED_DATA' => 300, // 5 minutes for cached API data to be cached
     ];
 
     /**
@@ -71,27 +68,86 @@ class CMCClient
     }
 
     /**
-     * Retrieves coin data, preferring cached data but falling back to the database if
-     * the API call fails. Returns the data as a collection of coins.
+     * Retrieves coin data following the priority: Fresh API → Cached API → Database.
      *
-     * @return Collection The collection of coin data, keyed by symbol.
+     * @return Collection
      */
     public function getCoinData(): Collection
     {
         try {
-            $staticData = $this->cacheApiData(
-                self::CACHE_KEYS['COINS_DATA_STATIC'],
-                self::CACHE_DURATIONS['COINS_DATA_STATIC'],
-                fn() => $this->fetchStaticDataFromApi()
-            );
-            $dynamicData = $this->cacheApiData(
-                self::CACHE_KEYS['COINS_DATA'],
-                self::CACHE_DURATIONS['COINS_DATA_DYNAMIC'],
-                fn() => $this->fetchDynamicDataFromApi()
-            );
+            // Try to get/fetch fresh API data
+            $freshData = $this->getFreshApiData();
+            if ($this->isValidData($freshData)) {
+                event(new CoinPriceUpdated($freshData->toArray()));
+                return $freshData;
+            }
 
-            // If API fetch was successful and data is valid, log it and return data
-            if ($this->isValidData($dynamicData)) {
+            // Try to get cached API data
+            $cachedData = $this->getCachedApiData();
+            if ($this->isValidData($cachedData)) {
+                Log::info('Using cached API data');
+                return $cachedData;
+            }
+
+            // Fallback to database data if API data fetch fails
+            Log::info('Using database data as fallback');
+            return $this->getCoinsFromDatabase();
+
+        } catch (Exception $e) {
+            Log::error('Error in getCoinData: ' . $e->getMessage());
+            return $this->getCoinsFromDatabase();
+        }
+    }
+
+    /**
+     * Returns the current data source being used.
+     *
+     * @return string
+     */
+    public function getDataSource(): string
+    {
+        if (cache()->has(self::CACHE_KEYS['API_FRESH_DATA'])) {
+            return 'Fresh API';
+        }
+
+        if (cache()->has(self::CACHE_KEYS['API_CACHED_DATA'])) {
+            return 'Cached API';
+        }
+
+        return 'Database';
+    }
+
+    /**
+     * Attempts to fetch fresh data from API and cache it.
+     *
+     * @return Collection
+     */
+    private function getFreshApiData(): Collection
+    {
+        try {
+            $response = $this->sendAPIRequest();
+
+            if (!$response->successful() || empty($response->json('data'))) {
+                throw new Exception("Invalid API response");
+            }
+
+            $freshData = $this->processApiResponse($response->json('data'));
+
+            if ($this->isValidData($freshData)) {
+                // Cache as fresh data (short duration)
+                cache()->put(
+                    self::CACHE_KEYS['API_FRESH_DATA'],
+                    $freshData,
+                    self::CACHE_DURATIONS['FRESH_DATA']
+                );
+
+                // Cache as backup data (longer duration)
+                cache()->put(
+                    self::CACHE_KEYS['API_CACHED_DATA'],
+                    $freshData,
+                    self::CACHE_DURATIONS['CACHED_DATA']
+                );
+
                 ApiFetchLog::create([
                     'type' => 'API',
                     'source' => config('services.cmc.api_url'),
@@ -99,184 +155,90 @@ class CMCClient
                     'error_message' => null
                 ]);
 
-                return $staticData->map(function ($coin, $symbol) use ($dynamicData) {
-                    return array_merge($coin, [
-                        'price' => $dynamicData[$symbol]['price'] ?? 0,
-                        'market_cap' => $dynamicData[$symbol]['market_cap'] ?? 0,
-                        'percent_change_1h' => $dynamicData[$symbol]['percent_change_1h'] ?? 0,
-                        'percent_change_24h' => $dynamicData[$symbol]['percent_change_24h'] ?? 0,
-                        'percent_change_7d' => $dynamicData[$symbol]['percent_change_7d'] ?? 0,
-                        'volume_24h' => $dynamicData[$symbol]['volume_24h'] ?? 0,
-                    ]);
-                });
+                return $freshData;
             }
 
-            // If fresh API data is invalid, log failure and fallback to database
-            Log::warning("API returned invalid or zero dynamic data. Falling back to database.");
-
-            ApiFetchLog::create([
-                'type' => 'API',
-                'source' => config('services.cmc.api_url'),
-                'success' => false,
-                'error_message' => "API returned zero values."
-            ]);
-
-            return $this->getCoinsFromDatabase();
-        } catch (Exception $e) {
-            Log::error('Error fetching coins: ' . $e->getMessage());
-
-            ApiFetchLog::create([
-                'type' => 'API',
-                'source' => config('services.cmc.api_url'),
-                'success' => false,
-                'error_message' => $e->getMessage()
-            ]);
-
-            return $this->getCoinsFromDatabase();
-        }
-    }
-
-    /**
-     * Fetches fresh static data from the CoinMarketCap API.
-     * Falls back to the database if the API call fails.
-     *
-     * @return Collection The collection of static coin data.
-     */
-    private function fetchStaticDataFromApi(): Collection
-    {
-        try {
-            $response = $this->sendAPIRequest();
-
-            if (!$response->successful() || empty($response->json('data'))) {
-                throw new Exception("Invalid API response: Empty static data.");
-            }
-
-            return collect($response->json('data'))->mapWithKeys(fn($coin) => [
-                $coin['symbol'] => [
-                    'name' => $coin['name'],
-                    'symbol' => $coin['symbol'],
-                ],
-            ]);
+            throw new Exception("Invalid data format from API");
 
         } catch (Exception $e) {
-            Log::error('Failed to fetch static data from API: ' . $e->getMessage());
-            return $this->getStaticDataFromDatabase();
+            Log::error('Failed to fetch fresh API data: ' . $e->getMessage());
+
+            // Return empty collection to trigger fallback
+            return collect();
         }
     }
 
     /**
-     * Caches API data if new data is fetched, or returns cached data.
-     *
-     * @param string $cacheKey The cache key.
-     * @param int $cacheDuration The duration to keep the data in the cache.
-     * @param callable $fetchDataFromApi A callable to fetch fresh data.
-     * @return Collection The cached or fresh data as a collection.
-     *
-     * @throws ContainerExceptionInterface
-     * @throws NotFoundExceptionInterface
-     */
-    private function cacheApiData(string $cacheKey, int $cacheDuration, callable $fetchDataFromApi): Collection
-    {
-        $cachedData = cache()->get($cacheKey);
-        $newData = $fetchDataFromApi();
-
-        if ($newData->isNotEmpty()) {
-            cache()->put($cacheKey, $newData, $cacheDuration);
-            return $newData;
-        }
-
-        return $cachedData ?? collect();
-    }
-
-    /**
-     * Retrieves volatile coins data from the CoinMarketCap Api.
-     * If fetch fails, Fetches coins data from database.
+     * Retrieves cached API data.
      *
      * @return Collection
      */
-    private function fetchDynamicDataFromApi(): Collection
+    private function getCachedApiData(): Collection
     {
-        try {
-            $response = $this->sendAPIRequest();
+        // Try fresh data cache
+        $freshData = cache()->get(self::CACHE_KEYS['API_FRESH_DATA']);
+        if ($this->isValidData($freshData)) {
+            return $freshData;
+        }
 
-            if (!$response->successful() || empty($response->json('data'))) {
-                throw new Exception("Invalid API response: Empty dynamic data.");
-            }
+        // Try backup cache
+        $cachedData = cache()->get(self::CACHE_KEYS['API_CACHED_DATA']);
+        if ($this->isValidData($cachedData)) {
+            return $cachedData;
+        }
 
-            $data = collect($response->json('data'))->mapWithKeys(fn($coin) => [
+        return collect();
+    }
+
+    /**
+     * Processes API response into standardized format.
+     *
+     * @param array $apiData
+     * @return Collection
+     */
+    private function processApiResponse(array $apiData): Collection
+    {
+        return collect($apiData)->mapWithKeys(function ($coin) {
+            return [
                 $coin['symbol'] => [
+                    'name' => $coin['name'],
+                    'symbol' => $coin['symbol'],
                     'price' => $coin['quote']['USD']['price'] ?? 0,
                     'market_cap' => $coin['quote']['USD']['market_cap'] ?? 0,
                     'percent_change_1h' => $coin['quote']['USD']['percent_change_1h'] ?? 0,
                     'percent_change_24h' => $coin['quote']['USD']['percent_change_24h'] ?? 0,
                     'percent_change_7d' => $coin['quote']['USD']['percent_change_7d'] ?? 0,
                     'volume_24h' => $coin['quote']['USD']['volume_24h'] ?? 0,
-                ],
-            ]);
-
-            if (!$this->isValidData($data)) {
-                throw new Exception("API returned only zero values.");
-            }
-
-            return $data;
-
-        } catch (Exception $e) {
-            Log::error('Failed to fetch fresh data from API: ' . $e->getMessage());
-            return $this->getDynamicDataFromDatabase();
-        }
-    }
-
-    private function isValidData(Collection $coins): bool
-    {
-        return $coins->isNotEmpty() && $coins->filter(fn($coin) => $coin['price'] > 0)->isNotEmpty();
+                ]
+            ];
+        });
     }
 
     /**
-     * Retrieve static data (name, symbol) from the database.
+     * Validates that the data collection is not empty and contains valid prices.
      *
-     * @return Collection The collection of static coin data.
+     * @param Collection|null $data
+     * @return bool
      */
-    private function getStaticDataFromDatabase(): Collection
+    private function isValidData(?Collection $data): bool
     {
-        return Coin::all()->mapWithKeys(fn($coin) => [
-            $coin->symbol => [
-                'name' => $coin->name,
-                'symbol' => $coin->symbol,
-            ],
-        ]);
+        if (!$data) return false;
+
+        return $data->isNotEmpty() && $data->filter(fn($coin) => ($coin['price'] ?? 0) > 0)->isNotEmpty();
     }
 
     /**
-     * Retrieve dynamic data (price, market_cap, volume_24h etc.) from the database.
+     * Retrieves coin data from the database as last resort.
      *
-     * @return Collection The collection of dynamic coin data.
-     */
-    private function getDynamicDataFromDatabase(): Collection
-    {
-        return Coin::all()->mapWithKeys(fn($coin) => [
-            $coin->symbol => [
-                'price' => $coin->price,
-                'market_cap' => $coin->market_cap,
-                'percent_change_1h' => $coin->percent_change_1h,
-                'percent_change_24h' => $coin->percent_change_24h,
-                'percent_change_7d' => $coin->percent_change_7d,
-                'volume_24h' => $coin->volume_24h,
-            ],
-        ]);
-    }
-
-    /**
-     * Retrieve coin data from the database, structuring it as a collection.
-     *
-     * @return Collection The collection of coins from the database, keyed by symbol.
+     * @return Collection
      */
     private function getCoinsFromDatabase(): Collection
     {
         ApiFetchLog::create([
             'type' => 'Database',
             'source' => 'Database',
-            'success' => true,
-            'error_message' => null
+            'success' => false,
+            'error_message' => 'Using database as fallback after API and cache failure'
         ]);
 
         return Coin::all()->mapWithKeys(function ($coin) {
