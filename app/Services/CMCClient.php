@@ -203,6 +203,7 @@ class CMCClient
                 $coin['symbol'] => [
                     'name' => $coin['name'],
                     'symbol' => $coin['symbol'],
+                    'logo' => $coin['logo'] ?? null,
                     'price' => $coin['quote']['USD']['price'] ?? 0,
                     'market_cap' => $coin['quote']['USD']['market_cap'] ?? 0,
                     'percent_change_1h' => $coin['quote']['USD']['percent_change_1h'] ?? 0,
