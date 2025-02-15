@@ -27,6 +27,17 @@ class PortfolioService
     }
 
     /**
+     * Calculates total portfolio value.
+     *
+     * @param Collection $groupedTransactions
+     * @return float
+     */
+    public function calculateTotalPortfolioValue(Collection $groupedTransactions): float
+    {
+        return $groupedTransactions->sum('fiat_spent_on_quantity');
+    }
+
+    /**
      * Groups transactions by coin and calculate relevant metrics.
      *
      * @param $portfolio
@@ -121,17 +132,5 @@ class PortfolioService
                 'created_at' => $transaction->created_at->format('d-m-Y'),
             ];
         });
-    }
-
-    /**
-     * Calculates total portfolio value.
-     *
-     * @param Collection $groupedTransactions
-     * @return float
-     */
-    public function calculateTotalPortfolioValue(Collection $groupedTransactions): float
-    {
-        $result = $groupedTransactions->sum('fiat_spent_on_quantity');
-        return $result;
     }
 }
