@@ -98,12 +98,12 @@ const fetchPortfolios = async (url = '/api/portfolios') => {
 
         // Populate portfolios and pagination
         portfolios.value = response.data.data; // Portfolio data
-        pagination.value = {
+        pagination.value = response.data.meta !== undefined ? {
             current_page: response.data.meta.current_page,
             last_page: response.data.meta.last_page,
             prev_page_url: response.data.links.prev,
             next_page_url: response.data.links.next,
-        };
+        } : '';
     } catch (error) {
         console.error('Error fetching portfolios:', error);
     } finally {
