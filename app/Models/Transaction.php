@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\TransactionTypeEnum;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -34,6 +35,7 @@ class Transaction extends Model
         'coin_id' => 'integer',
         'quantity' => 'float',
         'buy_price' => 'float',
+        'transaction_type' => TransactionTypeEnum::class,
     ];
 
     public function portfolio(): BelongsTo
