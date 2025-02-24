@@ -2,7 +2,9 @@
 
 namespace App\Http\Requests;
 
+use App\Enums\TransactionTypeEnum;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class TransactionStoreRequest extends FormRequest
 {
@@ -20,11 +22,11 @@ class TransactionStoreRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'portfolio_id' => ['required', 'integer', 'exists:Portfolios,id'],
-            'coin_id' => ['required', 'integer', 'exists:,id'],
+            'portfolio_id' => ['required', 'integer', 'exists:portfolios,id'],
+            'coin_id' => ['required', 'integer', 'exists:coins,id'],
             'quantity' => ['required', 'numeric', 'between:-9999999999.99999999,9999999999.99999999'],
             'buy_price' => ['required', 'numeric', 'between:-9999999999.99999999,9999999999.99999999'],
-            'transaction_type' => ['required', 'in:buy,sell'],
+            'transaction_type' => ['required', Rule::in(TransactionTypeEnum::values())],
         ];
     }
 }

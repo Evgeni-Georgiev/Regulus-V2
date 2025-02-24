@@ -2,52 +2,121 @@
 
 namespace App\Services;
 
+use App\Enums\TransactionTypeEnum;
+use App\Exceptions\InsufficientBalanceException;
+use App\Models\Coin;
 use App\Models\Portfolio;
+use App\Models\Transaction;
 use Illuminate\Support\Collection;
 
 class PortfolioService
 {
+    protected Portfolio $portfolio;
+    protected Transaction $transaction;
+    protected Coin $coin;
+    protected array $data;
+
+    /**
+     * Set transaction data.
+     *
+     * @param array $data
+     * @return static
+     */
+    public function setData(array $data): static
+    {
+        $this->data = $data;
+        return $this;
+    }
+
+    /**
+     * Load the portfolio by ID.
+     *
+     * @param Portfolio $portfolio
+     * @return static
+     */
+    public function loadPortfolio(Portfolio $portfolio): static
+    {
+        $this->portfolio = $portfolio;
+        return $this;
+    }
+
+    /**
+     * Load the coin by ID.
+     *
+     * @param Coin $coin
+     * @return static
+     */
+    public function loadCoin(Coin $coin): static
+    {
+        $this->coin = $coin;
+        return $this;
+    }
+
+    /**
+     * Load the transaction by ID.
+     *
+     * @param Transaction $transaction
+     * @return static
+     */
+    public function loadTransaction(Transaction $transaction): static
+    {
+        $this->transaction = $transaction;
+        return $this;
+    }
+
     /**
      * Gets detailed portfolio information including coin calculations.
      *
-     * @param Portfolio $portfolio
      * @param Collection $coinData
      * @return array
      */
-    public function getPortfolioDetails(Portfolio $portfolio, Collection $coinData): array
+    public function getPortfolioDetails(Collection $coinData): array
     {
-        $groupedTransactions = $this->getGroupTransactions($portfolio, $coinData);
+        $groupedTransactions = $this->getGroupTransactions($coinData);
 
         return [
-            'id' => $portfolio->id,
-            'name' => $portfolio->name,
+            'id' => $this->portfolio->id,
+            'name' => $this->portfolio->name,
             'total_value' => $this->calculateTotalPortfolioValue($groupedTransactions),
-            'coins' => $this->getGroupTransactions($portfolio, $coinData)->values(), // Reset array keys,
+            'coins' => $this->getGroupTransactions($coinData)->values(), // Reset array keys,
         ];
     }
 
     /**
-     * Calculates total portfolio value.
+     * Calculates total portfolio value by summing up all fiat investments.
      *
      * @param Collection $groupedTransactions
      * @return float
      */
     public function calculateTotalPortfolioValue(Collection $groupedTransactions): float
     {
-        return $groupedTransactions->sum('fiat_spent_on_quantity');
+        return max(0, $groupedTransactions->sum('fiat_spent_on_quantity'));
+    }
+
+    /**
+     * Get the total quantity holding for a specific coin in a portfolio.
+     *
+     * @param Coin $coin
+     * @return float
+     */
+    public function getTotalHoldingForCoin(Coin $coin): float
+    {
+        return $this->portfolio->transactions()
+            ->where('coin_id', $coin->id)
+            ->get()
+            ->sum(fn($transaction) => $transaction->transaction_type === TransactionTypeEnum::BUY ? $transaction->quantity : -$transaction->quantity);
     }
 
     /**
      * Groups transactions by coin and calculate relevant metrics.
      *
-     * @param $portfolio
      * @param Collection $coinData
      * @return Collection
      */
-    private function getGroupTransactions($portfolio, Collection $coinData): Collection
+    private function getGroupTransactions(Collection $coinData): Collection
     {
         // Group transactions by coin and include related coin details
-        return $portfolio->transactions()
+        return $this->portfolio->transactions()
             ->with('coin')
             ->get()
             ->groupBy('coin_id')
@@ -63,6 +132,7 @@ class PortfolioService
      * @param $transactions
      * @param Collection $coinData
      * @return array|null
+     * @throws InsufficientBalanceException
      */
     private function processCoinGroup($transactions, Collection $coinData): ?array
     {
@@ -100,16 +170,20 @@ class PortfolioService
     private function calculateCoinMetrics($transactions, $currentCoinPrice): array
     {
         // Calculate total quantity for the coin
-        $totalQuantity = $transactions->sum('quantity');
+        $totalQuantity = $transactions->sum(function ($transaction) {
+            return $transaction->transaction_type === TransactionTypeEnum::BUY
+                ? $transaction->quantity
+                : -$transaction->quantity;
+        });
 
         // Calculate weighted average buy price
         $totalCost = $transactions->reduce(function ($sum, $transaction) {
-            return $sum + ($transaction->quantity * $transaction->buy_price);
+            return $sum + ($transaction->quantity * $transaction->buy_price * ($transaction->transaction_type === TransactionTypeEnum::BUY ? 1 : -1));
         }, 0);
 
         return [
-            'fiat_spent_on_quantity' => $totalQuantity * $currentCoinPrice, // $currentInvestmentCoinValue
-            'total_holding_quantity' => $totalQuantity,
+            'fiat_spent_on_quantity' => max(0, $totalQuantity * $currentCoinPrice), // $currentInvestmentCoinValue
+            'total_holding_quantity' => max(0, $totalQuantity),
             'average_buy_price' => $totalQuantity > 0 ? $totalCost / $totalQuantity : 0,
         ];
     }
@@ -119,10 +193,12 @@ class PortfolioService
      *
      * @param $transactions
      * @return Collection
+     * @throws InsufficientBalanceException
      */
     private function processTransactions($transactions): Collection
     {
         return $transactions->map(function ($transaction) {
+//            return $this->processTransaction();
             return [
                 'id' => $transaction->id,
                 'transaction_type' => $transaction->transaction_type,
