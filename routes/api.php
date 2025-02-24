@@ -10,6 +10,8 @@ Route::middleware(['auth:sanctum'])->get('/user', function (Request $request) {
     return $request->user();
 });
 
+Route::get('/portfolios/{portfolio}/history', [PortfolioController::class, 'history']);
+
 
 Route::apiResource('coins', CoinController::class);
 
