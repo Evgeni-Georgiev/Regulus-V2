@@ -7,8 +7,10 @@ use App\Http\Requests\PortfolioStoreRequest;
 use App\Http\Requests\PortfolioUpdateRequest;
 use App\Http\Resources\PortfolioResource;
 use App\Models\Portfolio;
+use App\Models\PortfolioHistory;
 use App\Services\CMCClient;
 use App\Services\PortfolioService;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 
@@ -39,9 +41,20 @@ class PortfolioController extends Controller
     {
         // Fetch coins data from API
         $coinData = $this->cmcClient->getCoinData();
+        $portfolioService = app(PortfolioService::class)
+            ->loadPortfolio($portfolio);
 
         return response()->json([
-            'portfolio' => app(PortfolioService::class)->getPortfolioDetails($portfolio, $coinData),
+            'portfolio' => $portfolioService->getPortfolioDetails($coinData),
+        ]);
+    }
+
+    public function history(Portfolio $portfolio): JsonResponse
+    {
+        $portfolioHistory = PortfolioHistory::where('portfolio_id', $portfolio->id)->first();
+
+        return response()->json([
+            'history' => $portfolioHistory->orderBy('changed_at')->get(),
         ]);
     }
 
