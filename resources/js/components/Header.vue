@@ -2,23 +2,42 @@
 import Logo from '@comps/Logo.vue';
 import config from "tailwindcss/defaultConfig";
 import { HOME_URL } from "../constants";
+import ThemeToggle from "@comps/ui/ThemeToggle.vue";
 </script>
 
 <template>
-    <header class="bg-gray-900 text-white py-4 px-6 flex items-center justify-between shadow-md">
+    <header class="bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100 py-4 px-6 flex items-center justify-between shadow-md">
         <!-- Left Section: Logo and Navigation -->
         <div class="flex items-center space-x-6">
-            <Logo/>
+            <router-link
+                to="/"
+            >
+                <Logo/>
+            </router-link>
 
-            <!-- Navigation Links -->
-<!--            <nav class="hidden md:flex space-x-4">-->
-                <a :href="HOME_URL" class="hover:text-gray-400">Home</a>
-                <a href="/coins" class="hover:text-gray-400">Cryptocurrencies</a>
-<!--                <a href="/dexscan" class="hover:text-gray-400">DexScan</a>-->
-<!--                <a href="/exchanges" class="hover:text-gray-400">Exchanges</a>-->
-<!--                <a href="/community" class="hover:text-gray-400">Community</a>-->
-<!--                <a href="/products" class="hover:text-gray-400">Products</a>-->
-<!--            </nav>-->
+            <nav class="flex items-center space-x-6">
+                <router-link
+                    to="/coins"
+                    class="bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100 hover:text-gray-900 dark:hover:text-white"
+                >
+                    Cryptocurrencies
+                </router-link>
+
+                <!-- Theme Toggle -->
+                <ThemeToggle />
+
+                <!-- User dropdown -->
+<!--                <div class="relative">-->
+<!--                    <button-->
+<!--                        class="flex items-center text-gray-900 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"-->
+<!--                    >-->
+<!--                        <span class="mr-2">Account</span>-->
+<!--                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">-->
+<!--                            <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />-->
+<!--                        </svg>-->
+<!--                    </button>-->
+<!--                </div>-->
+            </nav>
         </div>
 
         <!-- Right Section: Search Bar and User Links -->
@@ -29,20 +48,18 @@ import { HOME_URL } from "../constants";
                 <input
                     type="text"
                     placeholder="Search"
-                    class="w-full py-2 pl-10 pr-4 bg-gray-800 text-sm text-white rounded-lg focus:outline-none focus:ring focus:ring-blue-500"
+                    class="w-full py-2 pl-10 pr-4 bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-100 hover:text-gray-900 dark:hover:text-white rounded-lg focus:outline-none focus:ring focus:ring-blue-500"
                 />
                 <i class="fas fa-search absolute left-3 top-2.5 text-gray-400"></i>
             </div>
 
             <!-- Portfolio and Watchlist -->
-            <a href="/portfolios" class="hover:text-gray-400 flex items-center space-x-1">
-                <i class="fas fa-briefcase"></i>
-                <span>Portfolio</span>
-            </a>
-<!--            <a href="/watchlist" class="hover:text-gray-400 flex items-center space-x-1">-->
-<!--                <i class="fas fa-star"></i>-->
-<!--                <span>Watchlist</span>-->
-<!--            </a>-->
+            <router-link
+                to="/portfolios"
+                class="text-gray-900 dark:text-gray-100 hover:text-gray-900 dark:hover:text-white"
+            >
+                Portfolios
+            </router-link>
 
             <!-- Icons -->
             <div class="flex items-center space-x-2">
