@@ -4,7 +4,6 @@ import Portfolio from '@comps/pages/Portfolio/Portfolio.vue';
 import PortfolioView from "@comps/pages/Portfolio/PortfolioView.vue";
 
 const routes = [
-    // { path: '/', name: 'Home', component: () => import('@/views/Home.vue') },
     {
         path: '/',
         name: 'Home',
