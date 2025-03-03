@@ -54,4 +54,14 @@ class Portfolio extends Model
             ->withPivot('quantity')
             ->withTimestamps();
     }
+
+    /**
+     * A Portfolio van have many Snapshots.
+     *
+     * @return HasMany
+     */
+    public function snapshots(): HasMany
+    {
+        return $this->hasMany(PortfolioSnapshot::class);
+    }
 }

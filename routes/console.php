@@ -1,6 +1,7 @@
 <?php
 
 use App\Console\Commands\CoinFetch;
+use App\Jobs\RecordPortfolioSnapshotJob;
 use App\Jobs\SyncCoinDataJob;
 use App\Jobs\UpdateCoinPriceJob;
 use Illuminate\Foundation\Inspiring;
@@ -14,3 +15,4 @@ Artisan::command('inspire', function () {
 Schedule::command(CoinFetch::class)->everyFifteenSeconds();
 Schedule::job(new UpdateCoinPriceJob())->everyFifteenSeconds();
 Schedule::job(new SyncCoinDataJob())->everyOddHour();
+Schedule::job(new RecordPortfolioSnapshotJob())->everyThirtySeconds();
