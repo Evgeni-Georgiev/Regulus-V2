@@ -5,7 +5,7 @@ import { HOME_URL } from "../constants";
 </script>
 
 <template>
-    <header class="bg-gray-900 text-white py-4 px-6 flex items-center justify-between shadow-md">
+    <header class="text-gray-800 py-4 px-6 flex items-center justify-between shadow-md">
         <!-- Left Section: Logo and Navigation -->
         <div class="flex items-center space-x-6">
             <Logo/>
@@ -29,7 +29,7 @@ import { HOME_URL } from "../constants";
                 <input
                     type="text"
                     placeholder="Search"
-                    class="w-full py-2 pl-10 pr-4 bg-gray-800 text-sm text-white rounded-lg focus:outline-none focus:ring focus:ring-blue-500"
+                    class="w-full py-2 pl-10 pr-4 bg-gray-100 text-sm text-gray-400 rounded-lg focus:outline-none focus:ring focus:ring-blue-500"
                 />
                 <i class="fas fa-search absolute left-3 top-2.5 text-gray-400"></i>
             </div>
@@ -46,13 +46,13 @@ import { HOME_URL } from "../constants";
 
             <!-- Icons -->
             <div class="flex items-center space-x-2">
-                <button class="p-2 bg-gray-800 rounded-full hover:bg-gray-700">
+                <button class="p-2 bg-gray-100 rounded-full hover:bg-gray-700">
                     <i class="fas fa-bell"></i>
                 </button>
-                <button class="p-2 bg-gray-800 rounded-full hover:bg-gray-700">
+                <button class="p-2 bg-gray-100 rounded-full hover:bg-gray-700">
                     <i class="fas fa-cog"></i>
                 </button>
-                <button class="p-2 bg-gray-800 rounded-full hover:bg-gray-700">
+                <button class="p-2 bg-gray-100 rounded-full hover:bg-gray-700">
                     <img src="@images/avatar.jpeg" alt="User Profile" class="h-6 w-6 rounded-full" />
                 </button>
             </div>
