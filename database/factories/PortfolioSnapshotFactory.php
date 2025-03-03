@@ -32,8 +32,16 @@ class PortfolioSnapshotFactory extends Factory
         $trend = sin($this->minutesCount / 480 * 3.14159) * 500; // Slight sine wave pattern over time
         $totalValue = $baseValue + $randomFactor + $trend;
 
+        // Check if Portfolio table has any records.
+        $portfolioCount = Portfolio::count();
+
+        // If empty, create a new Portfolio, otherwise pick a random existing one.
+        $portfolioId = $portfolioCount > 0
+            ? Portfolio::inRandomOrder()->first()->id
+            : Portfolio::factory()->create()->id;
+
         return [
-            'portfolio_id' => Portfolio::factory(),
+            'portfolio_id' => $portfolioId,
             'total_portfolio_value' => max(100, $totalValue),
             'recorded_at' => now()->subMinutes($this->minutesCount),
             'created_at' => now(),
