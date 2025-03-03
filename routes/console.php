@@ -13,6 +13,6 @@ Artisan::command('inspire', function () {
 })->purpose('Display an inspiring quote')->hourly();
 
 Schedule::command(CoinFetch::class)->everyFifteenSeconds();
-Schedule::job(new UpdateCoinPriceJob())->everyFifteenSeconds();
+Schedule::job(new UpdateCoinPriceJob())->everyFiveMinutes();
 Schedule::job(new SyncCoinDataJob())->everyOddHour();
 Schedule::job(new RecordPortfolioSnapshotJob())->everyThirtySeconds();
