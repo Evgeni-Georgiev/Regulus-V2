@@ -33,8 +33,8 @@ class PortfolioSnapshotFactory extends Factory
         $totalValue = $baseValue + $randomFactor + $trend;
 
         return [
-            'portfolio_id' => 5,
-            'total_portfolio_value' => max(100, $totalValue), // Ensure minimum value of 100
+            'portfolio_id' => Portfolio::factory(),
+            'total_portfolio_value' => max(100, $totalValue),
             'recorded_at' => now()->subMinutes($this->minutesCount),
             'created_at' => now(),
             'updated_at' => now(),

@@ -12,6 +12,6 @@ class PortfolioSnapshotSeeder extends Seeder
      */
     public function run(): void
     {
-        PortfolioSnapshot::factory()->count(100000)->create();
+        PortfolioSnapshot::factory()->count(10)->create();
     }
 }
