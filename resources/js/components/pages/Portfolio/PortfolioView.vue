@@ -1,21 +1,21 @@
 <template>
-    <div class="flex flex-col min-h-screen">
+    <div class="flex flex-col min-h-screen bg-gray-50 dark:bg-gray-900">
         <!-- Main Content -->
-        <main class="container mx-auto my-4 px-4 py-8 flex-grow bg-white">
+        <main class="container mx-auto my-4 px-4 py-8 flex-grow bg-white dark:bg-gray-800 rounded-lg shadow-md">
             <!-- Portfolio Overview -->
-            <div class="bg-white shadow-md rounded-lg p-6 mb-6 border border-gray-200">
-                <h1 class="text-4xl font-bold text-gray-800">Portfolio: {{ portfolio.name }}</h1>
-                <p class="text-2xl text-green-600 mt-4">Total Value: {{ formatPrice(portfolio.total_value) }}</p>
+            <div class="bg-white dark:bg-gray-800 shadow-md rounded-lg p-6 mb-6 border border-gray-200 dark:border-gray-700">
+                <h1 class="text-4xl font-bold text-gray-800 dark:text-white">Portfolio: {{ portfolio.name }}</h1>
+                <p class="text-2xl text-green-600 dark:text-green-400 mt-4">Total Value: {{ formatPrice(portfolio.total_value) }}</p>
             </div>
 
             <!-- Portfolio Snapshot Chart -->
-            <section class="bg-white shadow-lg rounded-lg p-6 mb-6 border border-gray-200">
+            <section class="bg-white dark:bg-gray-800 shadow-lg rounded-lg p-6 mb-6 border border-gray-200 dark:border-gray-700">
                 <div class="flex flex-col mb-6">
                     <div class="flex items-center mb-3">
-                        <h2 class="text-2xl font-semibold text-gray-800">History</h2>
+                        <h2 class="text-2xl font-semibold text-gray-800 dark:text-white">History</h2>
                     </div>
                     <div class="self-end">
-                        <div class="inline-flex bg-gray-100 rounded-lg p-1">
+                        <div class="inline-flex bg-gray-100 dark:bg-gray-700 rounded-lg p-1">
                             <button
                                 v-for="period in timePeriods"
                                 :key="period"
@@ -24,7 +24,7 @@
                                     'px-4 py-1.5 text-sm rounded-md transition-colors',
                                     activePeriod === period
                                         ? 'bg-green-500 text-white'
-                                        : 'text-gray-500 hover:text-gray-700 hover:bg-gray-200'
+                                        : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-600'
                                 ]"
                             >
                                 {{ period }}
@@ -34,14 +34,14 @@
                 </div>
 
                 <!-- Chart container -->
-                <div class="chart-container bg-white rounded-lg p-4 border border-gray-200 h-96">
+                <div class="chart-container bg-white dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700 h-96">
                     <Line
                         v-if="filteredChartData"
                         :data="filteredChartData"
                         :options="chartOptions"
                         :key="chartKey"
                     />
-                    <div v-else class="h-full flex items-center justify-center text-gray-500">
+                    <div v-else class="h-full flex items-center justify-center text-gray-500 dark:text-gray-400">
                         {{ originalSnapshot.length ? 'No data available for selected period' : 'Loading chart data...' }}
                     </div>
                 </div>
@@ -49,12 +49,12 @@
 
             <!-- Coins Section -->
             <section class="mb-12">
-                <h2 class="text-3xl font-semibold mb-6 text-gray-800">Coins</h2>
-                <div v-for="coin in portfolio.coins" :key="coin.symbol" class="bg-white shadow-md rounded-lg p-6 mb-6 border border-gray-200">
-                    <h3 class="text-2xl font-medium text-gray-700 mb-4">
+                <h2 class="text-3xl font-semibold mb-6 text-gray-800 dark:text-white">Coins</h2>
+                <div v-for="coin in portfolio.coins" :key="coin.symbol" class="bg-white dark:bg-gray-800 shadow-md rounded-lg p-6 mb-6 border border-gray-200 dark:border-gray-700">
+                    <h3 class="text-2xl font-medium text-gray-700 dark:text-gray-200 mb-4">
                         {{ coin.name }} ({{ coin.symbol }}) - {{ formatPrice(coin.price) }}
                     </h3>
-                    <div class="grid grid-cols-7 gap-4 bg-gray-100 p-4 rounded-t-lg font-medium text-gray-700">
+                    <div class="grid grid-cols-7 gap-4 bg-gray-100 dark:bg-gray-700 p-4 rounded-t-lg font-medium text-gray-700 dark:text-gray-200">
                         <div>Name</div>
                         <div>Type</div>
                         <div>Current Price</div>
@@ -63,7 +63,7 @@
                         <div>Add Transaction</div>
                         <div>Actions</div>
                     </div>
-                    <div class="grid grid-cols-7 gap-4 p-4 hover:bg-gray-50 border-t border-gray-200">
+                    <div class="grid grid-cols-7 gap-4 p-4 hover:bg-gray-50 dark:hover:bg-gray-700 border-t border-gray-200 dark:border-gray-700 text-gray-800 dark:text-gray-200">
                         <div>{{ coin.name }}</div>
                         <div class="capitalize">{{ coin.symbol }}</div>
                         <div>{{ formatPrice(coin.price) }}</div>
@@ -80,9 +80,9 @@
 
             <!-- Transactions Section -->
             <section>
-                <h2 class="text-3xl font-semibold mb-6 text-gray-800">Transactions</h2>
-                <div class="bg-white shadow-md rounded-lg overflow-hidden border border-gray-200">
-                    <div class="grid grid-cols-6 gap-4 bg-gray-100 p-4 font-medium text-gray-700">
+                <h2 class="text-3xl font-semibold mb-6 text-gray-800 dark:text-white">Transactions</h2>
+                <div class="bg-white dark:bg-gray-800 shadow-md rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700">
+                    <div class="grid grid-cols-6 gap-4 bg-gray-100 dark:bg-gray-700 p-4 font-medium text-gray-700 dark:text-gray-200">
                         <div>Date</div>
                         <div>Coin</div>
                         <div>Type</div>
@@ -93,7 +93,7 @@
                     <div v-for="coin in portfolio.coins" :key="coin.symbol">
                         <div v-for="transaction in coin.transactions"
                              :key="transaction.id"
-                             class="grid grid-cols-6 gap-4 p-4 hover:bg-gray-50 border-t border-gray-200">
+                             class="grid grid-cols-6 gap-4 p-4 hover:bg-gray-50 dark:hover:bg-gray-700 border-t border-gray-200 dark:border-gray-700 text-gray-800 dark:text-gray-200">
                             <div>{{ transaction.created_at }}</div>
                             <div>{{ coin.name }} ({{ coin.symbol }})</div>
                             <div class="capitalize">{{ transaction.transaction_type }}</div>
@@ -140,6 +140,33 @@ ChartJS.register(
     Tooltip,
     Legend
 );
+
+// Dark mode detection
+const isDarkMode = ref(false);
+
+const updateThemeDetection = () => {
+    isDarkMode.value = document.documentElement.classList.contains('dark');
+};
+
+// Watch for theme changes
+const setupThemeWatcher = () => {
+    // Initial detection
+    updateThemeDetection();
+
+    // Use MutationObserver to detect class changes on html element
+    const observer = new MutationObserver((mutations) => {
+        mutations.forEach((mutation) => {
+            if (mutation.attributeName === 'class') {
+                updateThemeDetection();
+                chartKey.value++; // Force chart re-render when theme changes
+            }
+        });
+    });
+
+    observer.observe(document.documentElement, { attributes: true });
+
+    return () => observer.disconnect();
+};
 
 // Component state
 const props = defineProps(['id']);
@@ -317,7 +344,7 @@ const filteredSnapshot = computed(() => {
     return sampleDataPoints(periodFiltered, activePeriod.value);
 });
 
-// Modified filteredChartData to match lighter theme
+// Modified filteredChartData to support dark mode
 const filteredChartData = computed(() => {
     if (!filteredSnapshot.value.length) return null;
 
@@ -328,17 +355,27 @@ const filteredChartData = computed(() => {
     // For the chart display, use numeric indices for even spacing
     const labels = sortedSnapshot.map((_, index) => index);
 
+    // Use different colors based on theme
+    const borderColor = isDarkMode.value ? '#34d399' : '#10B981'; // Emerald-400 for dark, Emerald-500 for light
+
     return {
         labels,
         datasets: [{
             label: 'Portfolio Value',
             data: sortedSnapshot.map(entry => entry.total_portfolio_value),
-            borderColor: '#10B981',
+            borderColor: borderColor,
             backgroundColor: (context) => {
                 const ctx = context.chart.ctx;
                 const gradient = ctx.createLinearGradient(0, 0, 0, 200);
-                gradient.addColorStop(0, 'rgba(16, 185, 129, 0.2)');
-                gradient.addColorStop(1, 'rgba(16, 185, 129, 0)');
+
+                if (isDarkMode.value) {
+                    gradient.addColorStop(0, 'rgba(52, 211, 153, 0.3)'); // Emerald-400 with opacity for dark
+                    gradient.addColorStop(1, 'rgba(52, 211, 153, 0)');
+                } else {
+                    gradient.addColorStop(0, 'rgba(16, 185, 129, 0.2)'); // Emerald-500 with opacity for light
+                    gradient.addColorStop(1, 'rgba(16, 185, 129, 0)');
+                }
+
                 return gradient;
             },
             fill: true,
@@ -349,7 +386,7 @@ const filteredChartData = computed(() => {
     };
 });
 
-// Update chart options for light theme
+// Update chart options for both light and dark themes
 const chartOptions = computed(() => {
     if (!filteredSnapshot.value.length) {
         return { responsive: true, maintainAspectRatio: false };
@@ -361,16 +398,30 @@ const chartOptions = computed(() => {
     // Show points only for shorter periods
     const showPoints = ['24h', '7d'].includes(activePeriod.value);
 
+    // Dark mode specific styles
+    const gridColor = isDarkMode.value ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)';
+    const textColor = isDarkMode.value ? 'rgba(255, 255, 255, 0.7)' : 'rgba(0, 0, 0, 0.7)';
+
+    // Tooltip styles based on theme
+    const tooltipBackgroundColor = isDarkMode.value
+        ? 'rgba(31, 41, 55, 0.95)' // dark:bg-gray-800 with opacity
+        : 'rgba(255, 255, 255, 0.95)';
+    const tooltipTitleColor = isDarkMode.value ? '#9CA3AF' : '#6B7280'; // gray-400/500
+    const tooltipBodyColor = isDarkMode.value ? '#F3F4F6' : '#111827'; // gray-100/900
+    const tooltipBorderColor = isDarkMode.value
+        ? 'rgba(75, 85, 99, 0.5)' // gray-600 with opacity
+        : 'rgba(209, 213, 219, 0.5)'; // gray-300 with opacity
+
     return {
         responsive: true,
         maintainAspectRatio: false,
         plugins: {
             legend: { display: false },
             tooltip: {
-                backgroundColor: 'rgba(255, 255, 255, 0.95)',
-                titleColor: '#6B7280',
-                bodyColor: '#111827',
-                borderColor: 'rgba(209, 213, 219, 0.5)',
+                backgroundColor: tooltipBackgroundColor,
+                titleColor: tooltipTitleColor,
+                bodyColor: tooltipBodyColor,
+                borderColor: tooltipBorderColor,
                 borderWidth: 1,
                 callbacks: {
                     title: (tooltipItems) => {
@@ -401,13 +452,13 @@ const chartOptions = computed(() => {
             x: {
                 grid: {
                     display: true,
-                    color: 'rgba(0, 0, 0, 0.05)',
+                    color: gridColor,
                     drawBorder: false,
                     drawTicks: false,
                     tickLength: 10
                 },
                 ticks: {
-                    color: 'rgba(0, 0, 0, 0.7)',
+                    color: textColor,
                     padding: 10,
                     autoSkip: false,
                     maxRotation: activePeriod.value === '24h' ? 45 : 0,
@@ -447,11 +498,11 @@ const chartOptions = computed(() => {
                 position: 'right',
                 beginAtZero: false,
                 grid: {
-                    color: 'rgba(0, 0, 0, 0.05)',
+                    color: gridColor,
                     drawBorder: false
                 },
                 ticks: {
-                    color: 'rgba(0, 0, 0, 0.7)',
+                    color: textColor,
                     font: {
                         size: 12,
                         weight: 'bold'
@@ -533,6 +584,7 @@ const setupRealtimeUpdates = () => {
 
 // Lifecycle hooks
 onMounted(() => {
+    setupThemeWatcher(); // Set up theme detection
     fetchPortfolioData();
     setupRealtimeUpdates();
 });

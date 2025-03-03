@@ -116,21 +116,21 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-    <div class="flex flex-col min-h-screen">
+    <div class="flex flex-col min-h-screen bg-white dark:bg-gray-900">
         <!-- Data Source Indicator -->
-<!--        <div class="text-sm text-gray-500 mb-4">-->
-<!--            Data Source: {{ dataSource }}-->
-<!--        </div>-->
+        <!--        <div class="text-sm text-gray-500 dark:text-gray-400 mb-4">-->
+        <!--            Data Source: {{ dataSource }}-->
+        <!--        </div>-->
         <!-- Header -->
-        <div v-if="isLoading" class="text-sm text-gray-500">Updating...</div>
+        <div v-if="isLoading" class="text-sm text-gray-500 dark:text-gray-400">Updating...</div>
 
         <!-- Main Content -->
-        <main class="flex-grow p-6 bg-gray-50">
-            <div class="bg-white shadow-md rounded-lg">
+        <main class="flex-grow p-6 bg-gray-50 dark:bg-gray-900">
+            <div class="bg-white dark:bg-gray-800 shadow-md rounded-lg">
 
                 <!-- Desktop View -->
                 <div class="hidden sm:block">
-                    <div class="grid grid-cols-9 bg-gray-100 py-3 px-6 text-sm font-semibold">
+                    <div class="grid grid-cols-9 bg-gray-100 dark:bg-gray-700 py-3 px-6 text-sm font-semibold text-gray-800 dark:text-gray-200">
                         <div>#</div>
                         <div>Name</div>
                         <div>Symbol</div>
@@ -144,7 +144,7 @@ onBeforeUnmount(() => {
                     <div
                         v-for="(coin, index) in coinsData"
                         :key="coin.symbol"
-                        class="grid grid-cols-9 border-b border-gray-200 py-3 px-6 hover:bg-gray-50 text-sm"
+                        class="grid grid-cols-9 border-b border-gray-200 dark:border-gray-700 py-3 px-6 hover:bg-gray-50 dark:hover:bg-gray-700 text-sm text-gray-800 dark:text-gray-200"
                     >
                         <div>{{ index + 1 }}</div>
                         <div class="font-medium">{{ coin.name }}</div>
@@ -152,13 +152,19 @@ onBeforeUnmount(() => {
                         <div :class="getAnimationClass(coin.symbol, 'price')">
                             ${{ coin.price.toFixed(2) }}
                         </div>
-                        <div :class="coin.percent_change_1h > 0 ? 'text-green-500' : 'text-red-500'">
+                        <div :class="[
+                            coin.percent_change_1h > 0 ? 'text-green-500 dark:text-green-400' : 'text-red-500 dark:text-red-400'
+                        ]">
                             {{ coin.percent_change_1h.toFixed(2) }}%
                         </div>
-                        <div :class="coin.percent_change_24h > 0 ? 'text-green-500' : 'text-red-500'">
+                        <div :class="[
+                            coin.percent_change_24h > 0 ? 'text-green-500 dark:text-green-400' : 'text-red-500 dark:text-red-400'
+                        ]">
                             {{ coin.percent_change_24h.toFixed(2) }}%
                         </div>
-                        <div :class="coin.percent_change_7d > 0 ? 'text-green-500' : 'text-red-500'">
+                        <div :class="[
+                            coin.percent_change_7d > 0 ? 'text-green-500 dark:text-green-400' : 'text-red-500 dark:text-red-400'
+                        ]">
                             {{ coin.percent_change_7d.toFixed(2) }}%
                         </div>
                         <div :class="getAnimationClass(coin.symbol, 'market_cap')">
@@ -209,6 +215,35 @@ onBeforeUnmount(() => {
     0%,
     20% {
         background-color: rgba(239, 68, 68, 0.2);
+    }
+    100% {
+        background-color: transparent;
+    }
+}
+
+/* Dark mode animation styles */
+html.dark .value-increased {
+    animation: dark-highlight-green 1s ease-out;
+}
+
+html.dark .value-decreased {
+    animation: dark-highlight-red 1s ease-out;
+}
+
+@keyframes dark-highlight-green {
+    0%,
+    20% {
+        background-color: rgba(16, 185, 129, 0.3);
+    }
+    100% {
+        background-color: transparent;
+    }
+}
+
+@keyframes dark-highlight-red {
+    0%,
+    20% {
+        background-color: rgba(239, 68, 68, 0.3);
     }
     100% {
         background-color: transparent;
