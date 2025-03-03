@@ -3,7 +3,7 @@ import Logo from '@comps/Logo.vue';
 </script>
 
 <template>
-    <footer class="bg-gray-900 text-white py-6 mt-8">
+    <footer class="text-gray-800 py-6 mt-8">
         <div class="container mx-auto grid grid-cols-1 md:grid-cols-3 gap-4">
             <!-- Logo and Socials -->
             <div>

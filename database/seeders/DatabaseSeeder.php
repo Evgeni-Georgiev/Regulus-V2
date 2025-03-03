@@ -17,6 +17,7 @@ class DatabaseSeeder extends Seeder
             PortfolioSeeder::class,
             TransactionSeeder::class,
             PortfolioCoinsSeeder::class,
+            PortfolioSnapshotSeeder::class
         ]);
 
     }
