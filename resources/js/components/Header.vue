@@ -48,7 +48,7 @@ import ThemeToggle from "@comps/ui/ThemeToggle.vue";
                 <input
                     type="text"
                     placeholder="Search"
-                    class="w-full py-2 pl-10 pr-4 bg-gray-800 text-sm text-white rounded-lg focus:outline-none focus:ring focus:ring-blue-500"
+                    class="w-full py-2 pl-10 pr-4 bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-100 hover:text-gray-900 dark:hover:text-white rounded-lg focus:outline-none focus:ring focus:ring-blue-500"
                 />
                 <i class="fas fa-search absolute left-3 top-2.5 text-gray-400"></i>
             </div>

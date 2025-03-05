@@ -19,14 +19,106 @@ use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class TransactionController extends Controller
 {
     public function index(Request $request): TransactionCollection
     {
-        $transactions = Transaction::all();
-
-        return new TransactionCollection($transactions);
+        try {
+            $query = Transaction::query();
+            
+            // Filter by portfolio_id if provided
+            if ($request->has('portfolio_id')) {
+                $query->where('portfolio_id', $request->input('portfolio_id'));
+            }
+            
+            // Filter by coin_id if provided
+            if ($request->has('coin_id')) {
+                $query->where('coin_id', $request->input('coin_id'));
+            }
+            
+            $transactions = $query->get();
+            
+            // Calculate transaction sums safely
+            $totalBought = 0;
+            $totalSold = 0;
+            
+            foreach ($transactions as $transaction) {
+                $amount = $transaction->quantity * $transaction->buy_price;
+                
+                if ($transaction->transaction_type === 'buy') {
+                    $totalBought += $amount;
+                } elseif ($transaction->transaction_type === 'sell') {
+                    $totalSold += $amount;
+                }
+            }
+            
+            $netPosition = $totalBought - $totalSold;
+            
+            // Calculate profit/loss if we have portfolio_id and coin_id
+            $profitLoss = 0;
+            $currentValue = 0;
+            $averageBuyPrice = 0;
+            $totalHoldingQuantity = 0;
+            
+            if ($request->has('portfolio_id') && $request->has('coin_id')) {
+                // Get the coin data for this portfolio
+                $portfolio = Portfolio::find($request->input('portfolio_id'));
+                if ($portfolio) {
+                    $coin = $portfolio->coins()
+                        ->where('coin_id', $request->input('coin_id'))
+                        ->first();
+                    
+                    if ($coin) {
+                        $averageBuyPrice = $coin->pivot->average_buy_price ?? 0;
+                        $totalHoldingQuantity = $coin->pivot->total_holding_quantity ?? 0;
+                        $currentPrice = $coin->price ?? 0;
+                        
+                        // Calculate profit/loss using the same logic from frontend
+                        $invested = $averageBuyPrice * $totalHoldingQuantity;
+                        $currentValue = $currentPrice * $totalHoldingQuantity;
+                        $profitLoss = $currentValue - $invested;
+                    }
+                }
+            }
+            
+            // Pass these totals to the TransactionCollection
+            return (new TransactionCollection($transactions))
+                ->additional([
+                    'meta' => [
+                        'total_bought' => $totalBought,
+                        'total_sold' => $totalSold,
+                        'net_position' => $netPosition,
+                        'profit_loss' => $profitLoss,
+                        'current_value' => $currentValue,
+                        'average_buy_price' => $averageBuyPrice,
+                        'total_holding_quantity' => $totalHoldingQuantity
+                    ]
+                ]);
+                
+        } catch (\Exception $e) {
+            Log::error('Error in TransactionController@index: ' . $e->getMessage(), [
+                'portfolio_id' => $request->input('portfolio_id'),
+                'coin_id' => $request->input('coin_id'),
+                'trace' => $e->getTraceAsString()
+            ]);
+            
+            // Return empty collection with error info
+            return (new TransactionCollection([]))
+                ->additional([
+                    'error' => 'Failed to load transactions',
+                    'meta' => [
+                        'total_bought' => 0,
+                        'total_sold' => 0,
+                        'net_position' => 0,
+                        'profit_loss' => 0,
+                        'current_value' => 0,
+                        'average_buy_price' => 0,
+                        'total_holding_quantity' => 0
+                    ]
+                ]);
+        }
     }
 
     /**

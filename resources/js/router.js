@@ -2,6 +2,7 @@ import { createRouter, createWebHistory } from 'vue-router';
 import Coins from '@comps/pages/Coin/Coin.vue';
 import Portfolio from '@comps/pages/Portfolio/Portfolio.vue';
 import PortfolioView from "@comps/pages/Portfolio/PortfolioView.vue";
+import TransactionView from "@comps/pages/Transaction/TransactionView.vue";
 
 const routes = [
     {
@@ -25,6 +26,12 @@ const routes = [
         component: PortfolioView,
         props: true,
     },
+    {
+        path: '/portfolio/:portfolioId/coin/:coinId/transactions',
+        name: 'TransactionView',
+        component: TransactionView,
+        props: true
+    }
 ];
 
 const router = createRouter({

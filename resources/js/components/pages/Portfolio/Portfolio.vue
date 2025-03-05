@@ -82,9 +82,6 @@
 import { ref, onMounted } from 'vue';
 import axios from 'axios';
 
-import Header from '@comps/Header.vue';
-import Footer from '@comps/Footer.vue';
-
 // State
 const portfolios = ref([]);
 const pagination = ref({});
