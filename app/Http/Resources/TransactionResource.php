@@ -20,6 +20,7 @@ class TransactionResource extends JsonResource
             'buy_price' => $this->buy_price,
             'transaction_type' => $this->transaction_type,
             'coin' => CoinResource::make($this->whenLoaded('coin')),
+            'created_at' => $this->created_at ? $this->created_at->toISOString() : null,
         ];
     }
 }

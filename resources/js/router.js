@@ -27,18 +27,11 @@ const routes = [
         props: true,
     },
     {
-        path: '/transactions/:portfolioId/:coinId',
+        path: '/portfolio/:portfolioId/coin/:coinId/transactions',
         name: 'TransactionView',
         component: TransactionView,
         props: true
-    },
-    // TODO: Change the route for transactions view
-    // {
-    //     path: '/portfolios/${portfolioId}/coins/${coinId}',
-    //     name: 'TransactionView',
-    //     component: TransactionView,
-    //     props: true
-    // }
+    }
 ];
 
 const router = createRouter({

@@ -562,29 +562,6 @@ const calculateTransactionValue = (transaction) => {
     return transaction.transaction_type === 'buy' ? value : -value;
 };
 
-// For total P/L calculation
-const calculateProfitLoss = () => {
-    if (!coin.value || !coin.value.price) return 0;
-
-    // For buy transactions: Current value - cost basis
-    // For sell transactions: Sell value - cost basis at time of sell
-    const profitLoss = transactions.value.reduce((total, transaction) => {
-        if (transaction.transaction_type === 'buy') {
-            const currentValue = coin.value.price * transaction.quantity;
-            const costBasis = transaction.buy_price * transaction.quantity;
-            return total + (currentValue - costBasis);
-        } else {
-            // For sell, it's the difference between sell price and buy price
-            // Negative because we're selling assets (reducing holdings)
-            const sellValue = transaction.buy_price * transaction.quantity;
-            const costBasis = coin.value.average_buy_price * transaction.quantity;
-            return total - (sellValue - costBasis);
-        }
-    }, 0);
-
-    return profitLoss;
-};
-
 // Computed properties for filtered transactions
 const buyTransactions = computed(() => {
     return transactions.value.filter(t => t.transaction_type === 'buy');
