@@ -68,6 +68,9 @@
                     <!-- Profit/Loss -->
                     <div :class="getProfitLossClass(coin)">
                         {{ formatProfitLoss(coin.profit_loss) }}
+                        <span class="text-xs block">
+                            ({{ calculateProfitLossPercentage(coin) }}%)
+                        </span>
                     </div>
 
                     <!-- Actions -->
@@ -359,5 +362,16 @@ const formatProfitLoss = (value) => {
     
     // Add the sign manually
     return numValue < 0 ? '-' + formatted : formatted;
+};
+
+// Calculate profit/loss percentage for a coin
+const calculateProfitLossPercentage = (coin) => {
+    if (!coin || !coin.profit_loss || !coin.total_buy_value || coin.total_buy_value === 0) {
+        return '0.00';
+    }
+    
+    // Calculate according to formula: P/L% = (Current Value - Remaining Cost Basis) / Remaining Cost Basis × 100
+    const percentage = (parseFloat(coin.profit_loss) / parseFloat(coin.total_buy_value)) * 100;
+    return percentage.toFixed(2);
 };
 </script>

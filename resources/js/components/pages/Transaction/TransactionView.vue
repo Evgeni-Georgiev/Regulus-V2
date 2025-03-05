@@ -118,9 +118,9 @@
                                     <span class="tooltip">Current market value minus your invested amount.</span>
                                 </span>
                             </h3>
-                            <p class="text-2xl font-semibold" :class="coin.profit_loss >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'">
-<!--                                {{ formatPrice(transactionMeta.profit_loss) }}-->
+                            <p class="text-2xl font-semibold" :class="getProfitLossClass(coin.profit_loss)">
                                 {{ formatPrice(coin.profit_loss) }}
+                                <span class="text-sm ml-1">({{ calculateProfitLossPercentage(coin) }}%)</span>
                             </p>
                         </div>
                     </div>
@@ -672,6 +672,27 @@ const getChangeClass = (change) => {
     return change >= 0
         ? 'text-green-500 dark:text-green-400'
         : 'text-red-500 dark:text-red-400';
+};
+
+// Get CSS class for profit/loss based on value
+const getProfitLossClass = (value) => {
+    if (!isValidNumber(value)) return 'text-gray-500 dark:text-gray-400';
+    return parseFloat(value) >= 0 
+        ? 'text-green-600 dark:text-green-400' 
+        : 'text-red-600 dark:text-red-400';
+};
+
+// Calculate profit/loss percentage
+const calculateProfitLossPercentage = (coin) => {
+    if (!coin || !isValidNumber(coin.profit_loss) || !isValidNumber(coin.total_buy_value)) {
+        return '0.00';
+    }
+    
+    // Don't divide by zero
+    if (parseFloat(coin.total_buy_value) === 0) return '0.00';
+    
+    const percentage = (parseFloat(coin.profit_loss) / parseFloat(coin.total_buy_value)) * 100;
+    return percentage.toFixed(2);
 };
 </script>
 
