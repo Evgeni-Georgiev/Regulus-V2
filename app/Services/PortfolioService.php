@@ -148,6 +148,11 @@ class PortfolioService
         $apiCoin = $coinData[$coin->symbol];
         $coinMetrics = $this->calculateCoinMetrics($transactions, $apiCoin['price']);
 
+        // Calculate profit/loss using the exact formula provided
+        $invested = $coinMetrics['average_buy_price'] * $coinMetrics['total_holding_quantity'];
+        $currentValue = $apiCoin['price'] * $coinMetrics['total_holding_quantity'];
+        $profitLoss = $currentValue - $invested;
+
         return [
             'id' => $coin->id,
             'symbol' => $apiCoin['symbol'],
@@ -156,6 +161,7 @@ class PortfolioService
             'fiat_spent_on_quantity' => $coinMetrics['fiat_spent_on_quantity'],
             'total_holding_quantity' => $coinMetrics['total_holding_quantity'],
             'average_buy_price' => $coinMetrics['average_buy_price'],
+            'profit_loss' => $profitLoss,
             'transactions' => $this->processTransactions($transactions)->toArray()
         ];
     }
