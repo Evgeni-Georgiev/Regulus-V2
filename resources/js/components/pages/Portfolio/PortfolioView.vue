@@ -5,7 +5,13 @@
             <!-- Portfolio Overview -->
             <div class="bg-white dark:bg-gray-800 shadow-md rounded-lg p-6 mb-6 border border-gray-200 dark:border-gray-700">
                 <h1 class="text-4xl font-bold text-gray-800 dark:text-white">Portfolio: {{ portfolio.name }}</h1>
-                <p class="text-2xl text-green-600 dark:text-green-400 mt-4">Total Value: {{ formatPrice(portfolio.total_value) }}</p>
+                <div class="flex mt-4 items-baseline">
+                    <p class="text-2xl text-gray-800 dark:text-white mr-4">Total Value: {{ formatPrice(portfolio.total_value) }}</p>
+                    <p :class="getProfitLossClass(portfolio.total_profit_loss)">
+                        {{ formatProfitLoss(portfolio.total_profit_loss) }} 
+                        ({{ calculatePortfolioProfitLossPercentage(portfolio) }}%)
+                    </p>
+                </div>
             </div>
 
             <!-- Portfolio Chart Component -->
@@ -188,5 +194,39 @@ onMounted(() => {
 const formatPrice = (value) => {
     if (value === undefined || value === null) return '$0.00';
     return formatter.format(value);
+};
+
+// Get CSS class for profit/loss
+const getProfitLossClass = (value) => {
+    if (value === undefined || value === null) return 'text-gray-500 dark:text-gray-400';
+    
+    const numValue = typeof value === 'string' ? parseFloat(value) : value;
+    
+    if (numValue > 0) return 'text-green-500 dark:text-green-400';
+    if (numValue < 0) return 'text-red-500 dark:text-red-400';
+    return 'text-gray-500 dark:text-gray-400';
+};
+
+// Format profit/loss with sign
+const formatProfitLoss = (value) => {
+    if (value === undefined || value === null) return '$0.00';
+    
+    const numValue = typeof value === 'string' ? parseFloat(value) : value;
+    const formatted = formatter.format(Math.abs(numValue));
+    
+    return numValue < 0 ? '-' + formatted : '+' + formatted;
+};
+
+// Calculate portfolio profit/loss percentage
+const calculatePortfolioProfitLossPercentage = (portfolio) => {
+    if (!portfolio || !portfolio.total_profit_loss || !portfolio.total_cost_basis || 
+        portfolio.total_cost_basis === 0) {
+        return '0.00';
+    }
+    
+    // Use the formula: Total P/L% = (Total Current Value - Total Cost Basis) / Total Cost Basis × 100
+    // Since total_profit_loss = Total Current Value - Total Cost Basis, we can simplify:
+    const percentage = (parseFloat(portfolio.total_profit_loss) / parseFloat(portfolio.total_cost_basis)) * 100;
+    return percentage.toFixed(2);
 };
 </script>
