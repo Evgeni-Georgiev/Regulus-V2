@@ -17,7 +17,7 @@
             </div>
 
             <!-- Asset Rows -->
-            <div v-for="coin in coins" :key="coin.symbol" class="border-b border-gray-200 dark:border-gray-700">
+            <div v-for="coin in paginatedCoins" :key="coin.symbol" class="border-b border-gray-200 dark:border-gray-700">
                 <div class="grid grid-cols-9 gap-4 p-4 hover:bg-gray-50 dark:hover:bg-gray-500 text-gray-800 dark:text-gray-100">
                     <!-- Name with Logo -->
                     <div class="flex items-center">
@@ -100,6 +100,39 @@
             <div v-if="!coins || coins.length === 0" class="p-8 text-center text-gray-500 dark:text-gray-400">
                 No assets found in this portfolio. Add some assets to get started.
             </div>
+
+            <!-- Pagination Controls (styled like TransactionView) -->
+            <div v-if="coins && coins.length > 0" class="px-4 py-3 bg-gray-50 dark:bg-gray-700 border-t border-gray-200 dark:border-gray-600 flex justify-between items-center">
+                <div class="text-sm text-gray-600 dark:text-gray-400">
+                    Showing {{ paginationInfo.from }} to {{ paginationInfo.to }} of {{ coins.length }}
+                </div>
+                <div class="flex space-x-2">
+                    <button
+                        :disabled="currentPage === 1"
+                        @click="changePage(currentPage - 1)"
+                        :class="[
+                            'px-3 py-1 rounded-md',
+                            currentPage === 1
+                                ? 'bg-gray-200 text-gray-500 cursor-not-allowed dark:bg-gray-600 dark:text-gray-400'
+                                : 'bg-blue-500 text-white hover:bg-blue-600 dark:bg-blue-600 dark:hover:bg-blue-700'
+                        ]"
+                    >
+                        Previous
+                    </button>
+                    <button
+                        :disabled="currentPage * itemsPerPage >= coins.length"
+                        @click="changePage(currentPage + 1)"
+                        :class="[
+                            'px-3 py-1 rounded-md',
+                            currentPage * itemsPerPage >= coins.length
+                                ? 'bg-gray-200 text-gray-500 cursor-not-allowed dark:bg-gray-600 dark:text-gray-400'
+                                : 'bg-blue-500 text-white hover:bg-blue-600 dark:bg-blue-600 dark:hover:bg-blue-700'
+                        ]"
+                    >
+                        Next
+                    </button>
+                </div>
+            </div>
         </div>
     </section>
 
@@ -138,7 +171,7 @@ export default {
 </script>
 
 <script setup>
-import { ref, onMounted, onBeforeUnmount, nextTick } from 'vue';
+import { ref, onMounted, onBeforeUnmount, nextTick, computed, watch } from 'vue';
 
 // Props
 const props = defineProps({
@@ -159,6 +192,36 @@ const emit = defineEmits([
     'move-asset',
     'remove-asset'
 ]);
+
+// Pagination state
+const currentPage = ref(1);
+const itemsPerPage = ref(10);
+
+// Computed properties for pagination
+const paginatedCoins = computed(() => {
+    if (!props.coins || props.coins.length === 0) return [];
+
+    const startIndex = (currentPage.value - 1) * itemsPerPage.value;
+    const endIndex = startIndex + itemsPerPage.value;
+    return props.coins.slice(startIndex, endIndex);
+});
+
+const paginationInfo = computed(() => {
+    const from = props.coins.length === 0 ? 0 : (currentPage.value - 1) * itemsPerPage.value + 1;
+    const to = Math.min(currentPage.value * itemsPerPage.value, props.coins.length);
+    return { from, to };
+});
+
+// Handler to change the current page
+const changePage = (page) => {
+    if (page < 1 || page > Math.ceil(props.coins.length / itemsPerPage.value)) return;
+    currentPage.value = page;
+};
+
+// Reset to first page when coins array changes
+watch(() => props.coins, () => {
+    currentPage.value = 1;
+}, { deep: true });
 
 // For dropdown menu functionality
 const activeDropdown = ref(null);
@@ -310,12 +373,12 @@ const getProfitLossClass = (coin) => {
     if (coin.profit_loss === undefined || coin.profit_loss === null) {
         return 'text-gray-500 dark:text-gray-400';
     }
-    
+
     // Ensure we're dealing with a number
-    const profitLoss = typeof coin.profit_loss === 'string' 
-        ? parseFloat(coin.profit_loss) 
+    const profitLoss = typeof coin.profit_loss === 'string'
+        ? parseFloat(coin.profit_loss)
         : coin.profit_loss;
-    
+
     if (profitLoss > 0) return 'text-green-500 dark:text-green-400';
     if (profitLoss < 0) return 'text-red-500 dark:text-red-400';
     return 'text-gray-500 dark:text-gray-400';
@@ -348,10 +411,10 @@ const removeAsset = (coin) => {
 // New method to format profit/loss
 const formatProfitLoss = (value) => {
     if (value === undefined || value === null) return '$0.00';
-    
+
     // Make sure value is a number
     const numValue = typeof value === 'string' ? parseFloat(value) : value;
-    
+
     // Format the absolute value with the currency formatter
     const formatted = new Intl.NumberFormat('en-US', {
         style: 'currency',
@@ -359,7 +422,7 @@ const formatProfitLoss = (value) => {
         minimumFractionDigits: 2,
         maximumFractionDigits: 2
     }).format(Math.abs(numValue));
-    
+
     // Add the sign manually
     return numValue < 0 ? '-' + formatted : formatted;
 };
@@ -369,7 +432,7 @@ const calculateProfitLossPercentage = (coin) => {
     if (!coin || !coin.profit_loss || !coin.total_buy_value || coin.total_buy_value === 0) {
         return '0.00';
     }
-    
+
     // Calculate according to formula: P/L% = (Current Value - Remaining Cost Basis) / Remaining Cost Basis × 100
     const percentage = (parseFloat(coin.profit_loss) / parseFloat(coin.total_buy_value)) * 100;
     return percentage.toFixed(2);
