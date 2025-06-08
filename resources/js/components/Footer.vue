@@ -11,7 +11,7 @@ import Logo from '@comps/Logo.vue';
 
         <!-- Bottom Line -->
         <div class="mt-6 border-t border-gray-800 pt-4 text-center text-sm">
-            © {{ new Date().getFullYear() }} CoinMarketCap. All rights reserved.
+            © {{ new Date().getFullYear() }} Regulus. All rights reserved.
         </div>
     </footer>
 </template>
