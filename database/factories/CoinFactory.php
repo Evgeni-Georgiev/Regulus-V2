@@ -21,14 +21,14 @@ class CoinFactory extends Factory
     public function definition(): array
     {
         return [
-            'name' => $this->faker->name(),
-            'symbol' => $this->faker->regexify('[A-Za-z0-9]{20}'),
-            'price' => $this->faker->randomFloat(2, 0, 999999999999999999.99),
-            'market_cap' => $this->faker->randomFloat(2, 0, 999999999999999999.99),
-            'percent_change_1h' => $this->faker->randomFloat(2, 0, 999999.99),
-            'percent_change_24h' => $this->faker->randomFloat(2, 0, 999999.99),
-            'percent_change_7d' => $this->faker->randomFloat(2, 0, 999999.99),
-            'volume_24h' => $this->faker->randomFloat(2, 0, 999999999999999999.99),
+            'name' => $this->faker->company() . ' Coin',
+            'symbol' => $this->faker->regexify('[A-Z]{3,6}'),
+            'price' => $this->faker->randomFloat(2, 0.01, 100000),
+            'market_cap' => $this->faker->randomFloat(2, 1000, 1000000000),
+            'percent_change_1h' => $this->faker->randomFloat(2, -20, 20),
+            'percent_change_24h' => $this->faker->randomFloat(2, -50, 50),
+            'percent_change_7d' => $this->faker->randomFloat(2, -100, 100),
+            'volume_24h' => $this->faker->randomFloat(2, 1000, 100000000),
         ];
     }
 }

@@ -22,6 +22,9 @@ class Transaction extends Model
         'quantity',
         'buy_price',
         'transaction_type',
+        'exchange_source',
+        'exchange_transaction_id',
+        'synced_at',
     ];
 
     /**
@@ -36,6 +39,7 @@ class Transaction extends Model
         'quantity' => 'float',
         'buy_price' => 'float',
         'transaction_type' => TransactionTypeEnum::class,
+        'synced_at' => 'datetime',
     ];
 
     public function portfolio(): BelongsTo
