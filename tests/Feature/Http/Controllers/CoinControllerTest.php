@@ -1,155 +1,131 @@
 <?php
 
-namespace Tests\Feature\Http\Controllers;
-
 use App\Models\Coin;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Foundation\Testing\WithFaker;
 use JMac\Testing\Traits\AdditionalAssertions;
-use PHPUnit\Framework\Attributes\Test;
-use Tests\TestCase;
 
 /**
  * @see \App\Http\Controllers\Api\CoinController
  */
-final class CoinControllerTest extends TestCase
-{
-    use AdditionalAssertions, RefreshDatabase, WithFaker;
 
-    #[Test]
-    public function index_behaves_as_expected(): void
-    {
-        $coins = Coin::factory()->count(3)->create();
+uses(RefreshDatabase::class, WithFaker::class, AdditionalAssertions::class);
 
-        $response = $this->get(route('coins.index'));
+test('index behaves as expected', function () {
+    $coins = Coin::factory()->count(3)->create();
 
-        $response->assertOk();
-        $response->assertJsonStructure([]);
-    }
+    $response = $this->get(route('coins.index'));
 
+    $response->assertOk();
+    $response->assertJsonStructure([]);
+});
 
-    #[Test]
-    public function store_uses_form_request_validation(): void
-    {
-        $this->assertActionUsesFormRequest(
-            \App\Http\Controllers\Api\CoinController::class,
-            'store',
-            \App\Http\Requests\CoinStoreRequest::class
-        );
-    }
+test('store uses form request validation', function () {
+    $this->assertActionUsesFormRequest(
+        \App\Http\Controllers\Api\CoinController::class,
+        'store',
+        \App\Http\Requests\CoinStoreRequest::class
+    );
+});
 
-    #[Test]
-    public function store_saves(): void
-    {
-        $name = $this->faker->name();
-        $symbol = $this->faker->word();
-        $price = $this->faker->randomFloat(/** decimal_attributes **/);
-        $market_cap = $this->faker->randomFloat(/** decimal_attributes **/);
-        $percent_change_1h = $this->faker->randomFloat(/** decimal_attributes **/);
-        $percent_change_24h = $this->faker->randomFloat(/** decimal_attributes **/);
-        $percent_change_7d = $this->faker->randomFloat(/** decimal_attributes **/);
-        $volume_24h = $this->faker->randomFloat(/** decimal_attributes **/);
+test('store saves', function () {
+    $name = fake()->name();
+    $symbol = fake()->unique()->lexify('???'); // Generate 3-letter symbol
+    $price = fake()->randomFloat(2, 0.01, 100000); // Reasonable price range
+    $market_cap = fake()->randomFloat(2, 1000, 1000000000); // Market cap range
+    $percent_change_1h = fake()->randomFloat(2, -50, 50); // Percentage change range
+    $percent_change_24h = fake()->randomFloat(2, -50, 50);
+    $percent_change_7d = fake()->randomFloat(2, -50, 50);
+    $volume_24h = fake()->randomFloat(2, 1000, 10000000); // Volume range
 
-        $response = $this->post(route('coins.store'), [
-            'name' => $name,
-            'symbol' => $symbol,
-            'price' => $price,
-            'market_cap' => $market_cap,
-            'percent_change_1h' => $percent_change_1h,
-            'percent_change_24h' => $percent_change_24h,
-            'percent_change_7d' => $percent_change_7d,
-            'volume_24h' => $volume_24h,
-        ]);
+    $response = $this->post(route('coins.store'), [
+        'name' => $name,
+        'symbol' => $symbol,
+        'price' => $price,
+        'market_cap' => $market_cap,
+        'percent_change_1h' => $percent_change_1h,
+        'percent_change_24h' => $percent_change_24h,
+        'percent_change_7d' => $percent_change_7d,
+        'volume_24h' => $volume_24h,
+    ]);
 
-        $coins = Coin::query()
-            ->where('name', $name)
-            ->where('symbol', $symbol)
-            ->where('price', $price)
-            ->where('market_cap', $market_cap)
-            ->where('percent_change_1h', $percent_change_1h)
-            ->where('percent_change_24h', $percent_change_24h)
-            ->where('percent_change_7d', $percent_change_7d)
-            ->where('volume_24h', $volume_24h)
-            ->get();
-        $this->assertCount(1, $coins);
-        $coin = $coins->first();
+    $coins = Coin::query()
+        ->where('name', $name)
+        ->where('symbol', $symbol)
+        ->where('price', $price)
+        ->where('market_cap', $market_cap)
+        ->where('percent_change_1h', $percent_change_1h)
+        ->where('percent_change_24h', $percent_change_24h)
+        ->where('percent_change_7d', $percent_change_7d)
+        ->where('volume_24h', $volume_24h)
+        ->get();
+    expect($coins)->toHaveCount(1);
+    $coin = $coins->first();
 
-        $response->assertCreated();
-        $response->assertJsonStructure([]);
-    }
+    $response->assertCreated();
+    $response->assertJsonStructure([]);
+});
 
+test('show behaves as expected', function () {
+    $coin = Coin::factory()->create();
 
-    #[Test]
-    public function show_behaves_as_expected(): void
-    {
-        $coin = Coin::factory()->create();
+    $response = $this->get(route('coins.show', $coin));
 
-        $response = $this->get(route('coins.show', $coin));
+    $response->assertOk();
+    $response->assertJsonStructure([]);
+});
 
-        $response->assertOk();
-        $response->assertJsonStructure([]);
-    }
+test('update uses form request validation', function () {
+    $this->assertActionUsesFormRequest(
+        \App\Http\Controllers\Api\CoinController::class,
+        'update',
+        \App\Http\Requests\CoinUpdateRequest::class
+    );
+});
 
+test('update behaves as expected', function () {
+    $coin = Coin::factory()->create();
+    $name = fake()->name();
+    $symbol = fake()->unique()->lexify('???'); // Generate 3-letter symbol
+    $price = fake()->randomFloat(2, 0.01, 100000); // Reasonable price range
+    $market_cap = fake()->randomFloat(2, 1000, 1000000000); // Market cap range
+    $percent_change_1h = fake()->randomFloat(2, -50, 50); // Percentage change range
+    $percent_change_24h = fake()->randomFloat(2, -50, 50);
+    $percent_change_7d = fake()->randomFloat(2, -50, 50);
+    $volume_24h = fake()->randomFloat(2, 1000, 10000000); // Volume range
 
-    #[Test]
-    public function update_uses_form_request_validation(): void
-    {
-        $this->assertActionUsesFormRequest(
-            \App\Http\Controllers\Api\CoinController::class,
-            'update',
-            \App\Http\Requests\CoinUpdateRequest::class
-        );
-    }
+    $response = $this->put(route('coins.update', $coin), [
+        'name' => $name,
+        'symbol' => $symbol,
+        'price' => $price,
+        'market_cap' => $market_cap,
+        'percent_change_1h' => $percent_change_1h,
+        'percent_change_24h' => $percent_change_24h,
+        'percent_change_7d' => $percent_change_7d,
+        'volume_24h' => $volume_24h,
+    ]);
 
-    #[Test]
-    public function update_behaves_as_expected(): void
-    {
-        $coin = Coin::factory()->create();
-        $name = $this->faker->name();
-        $symbol = $this->faker->word();
-        $price = $this->faker->randomFloat(/** decimal_attributes **/);
-        $market_cap = $this->faker->randomFloat(/** decimal_attributes **/);
-        $percent_change_1h = $this->faker->randomFloat(/** decimal_attributes **/);
-        $percent_change_24h = $this->faker->randomFloat(/** decimal_attributes **/);
-        $percent_change_7d = $this->faker->randomFloat(/** decimal_attributes **/);
-        $volume_24h = $this->faker->randomFloat(/** decimal_attributes **/);
+    $coin->refresh();
 
-        $response = $this->put(route('coins.update', $coin), [
-            'name' => $name,
-            'symbol' => $symbol,
-            'price' => $price,
-            'market_cap' => $market_cap,
-            'percent_change_1h' => $percent_change_1h,
-            'percent_change_24h' => $percent_change_24h,
-            'percent_change_7d' => $percent_change_7d,
-            'volume_24h' => $volume_24h,
-        ]);
+    $response->assertOk();
+    $response->assertJsonStructure([]);
 
-        $coin->refresh();
+    expect($coin->name)->toBe($name);
+    expect($coin->symbol)->toBe($symbol);
+    expect($coin->price)->toBe($price);
+    expect($coin->market_cap)->toBe($market_cap);
+    expect($coin->percent_change_1h)->toBe($percent_change_1h);
+    expect($coin->percent_change_24h)->toBe($percent_change_24h);
+    expect($coin->percent_change_7d)->toBe($percent_change_7d);
+    expect($coin->volume_24h)->toBe($volume_24h);
+});
 
-        $response->assertOk();
-        $response->assertJsonStructure([]);
+test('destroy deletes and responds with no content', function () {
+    $coin = Coin::factory()->create();
 
-        $this->assertEquals($name, $coin->name);
-        $this->assertEquals($symbol, $coin->symbol);
-        $this->assertEquals($price, $coin->price);
-        $this->assertEquals($market_cap, $coin->market_cap);
-        $this->assertEquals($percent_change_1h, $coin->percent_change_1h);
-        $this->assertEquals($percent_change_24h, $coin->percent_change_24h);
-        $this->assertEquals($percent_change_7d, $coin->percent_change_7d);
-        $this->assertEquals($volume_24h, $coin->volume_24h);
-    }
+    $response = $this->delete(route('coins.destroy', $coin));
 
+    $response->assertNoContent();
 
-    #[Test]
-    public function destroy_deletes_and_responds_with(): void
-    {
-        $coin = Coin::factory()->create();
-
-        $response = $this->delete(route('coins.destroy', $coin));
-
-        $response->assertNoContent();
-
-        $this->assertModelMissing($coin);
-    }
-}
+    $this->assertModelMissing($coin);
+});
