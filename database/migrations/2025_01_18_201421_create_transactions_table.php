@@ -18,6 +18,9 @@ return new class extends Migration
             $table->float('quantity', 18);
             $table->float('buy_price', 18);
             $table->enum('transaction_type', ["buy","sell"])->default('buy');
+//            $table->string('exchange_source')->nullable();
+//            $table->string('exchange_transaction_id')->nullable();
+//            $table->timestamp('synced_at')->nullable();
             $table->timestamps();
         });
     }

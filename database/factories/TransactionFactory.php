@@ -28,6 +28,9 @@ class TransactionFactory extends Factory
             'quantity' => $this->faker->randomFloat(8, 0, 9999999999.99999999),
             'buy_price' => $this->faker->randomFloat(8, 0, 9999999999.99999999),
             'transaction_type' => $this->faker->randomElement(["buy","sell"]),
+            'exchange_source' => $this->faker->randomElement(['binance', 'coinbase', 'kraken', 'bitfinex', 'manual']),
+            'exchange_transaction_id' => $this->faker->uuid(),
+            'synced_at' => $this->faker->dateTimeThisMonth(),
         ];
     }
 }
