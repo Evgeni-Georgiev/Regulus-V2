@@ -1,120 +1,96 @@
 <?php
 
-namespace Tests\Feature\Http\Controllers;
-
 use App\Models\Portfolio;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Foundation\Testing\WithFaker;
 use JMac\Testing\Traits\AdditionalAssertions;
-use PHPUnit\Framework\Attributes\Test;
-use Tests\TestCase;
 
 /**
  * @see \App\Http\Controllers\Api\PortfolioController
  */
-final class PortfolioControllerTest extends TestCase
-{
-    use AdditionalAssertions, RefreshDatabase, WithFaker;
 
-    #[Test]
-    public function index_behaves_as_expected(): void
-    {
-        $portfolios = Portfolio::factory()->count(3)->create();
+uses(RefreshDatabase::class, WithFaker::class, AdditionalAssertions::class);
 
-        $response = $this->get(route('portfolios.index'));
+test('index behaves as expected', function () {
+    $portfolios = Portfolio::factory()->count(3)->create();
 
-        $response->assertOk();
-        $response->assertJsonStructure([]);
-    }
+    $response = $this->get(route('portfolios.index'));
 
+    $response->assertOk();
+    $response->assertJsonStructure([]);
+});
 
-    #[Test]
-    public function store_uses_form_request_validation(): void
-    {
-        $this->assertActionUsesFormRequest(
-            \App\Http\Controllers\Api\PortfolioController::class,
-            'store',
-            \App\Http\Requests\PortfolioStoreRequest::class
-        );
-    }
+test('store uses form request validation', function () {
+    $this->assertActionUsesFormRequest(
+        \App\Http\Controllers\Api\PortfolioController::class,
+        'store',
+        \App\Http\Requests\PortfolioStoreRequest::class
+    );
+});
 
-    #[Test]
-    public function store_saves(): void
-    {
-        $user = User::factory()->create();
-        $name = $this->faker->name();
+test('store saves', function () {
+    $user = User::factory()->create();
+    $name = fake()->name();
 
-        $response = $this->post(route('portfolios.store'), [
-            'user_id' => $user->id,
-            'name' => $name,
-        ]);
+    $response = $this->post(route('portfolios.store'), [
+        'user_id' => $user->id,
+        'name' => $name,
+    ]);
 
-        $portfolios = Portfolio::query()
-            ->where('user_id', $user->id)
-            ->where('name', $name)
-            ->get();
-        $this->assertCount(1, $portfolios);
-        $portfolio = $portfolios->first();
+    $portfolios = Portfolio::query()
+        ->where('user_id', $user->id)
+        ->where('name', $name)
+        ->get();
+    expect($portfolios)->toHaveCount(1);
+    $portfolio = $portfolios->first();
 
-        $response->assertCreated();
-        $response->assertJsonStructure([]);
-    }
+    $response->assertCreated();
+    $response->assertJsonStructure([]);
+});
 
+test('show behaves as expected', function () {
+    $portfolio = Portfolio::factory()->create();
 
-    #[Test]
-    public function show_behaves_as_expected(): void
-    {
-        $portfolio = Portfolio::factory()->create();
+    $response = $this->get(route('portfolios.show', $portfolio));
 
-        $response = $this->get(route('portfolios.show', $portfolio));
+    $response->assertOk();
+    $response->assertJsonStructure([]);
+});
 
-        $response->assertOk();
-        $response->assertJsonStructure([]);
-    }
+test('update uses form request validation', function () {
+    $this->assertActionUsesFormRequest(
+        \App\Http\Controllers\Api\PortfolioController::class,
+        'update',
+        \App\Http\Requests\PortfolioUpdateRequest::class
+    );
+});
 
+test('update behaves as expected', function () {
+    $portfolio = Portfolio::factory()->create();
+    $user = User::factory()->create();
+    $name = fake()->name();
 
-    #[Test]
-    public function update_uses_form_request_validation(): void
-    {
-        $this->assertActionUsesFormRequest(
-            \App\Http\Controllers\Api\PortfolioController::class,
-            'update',
-            \App\Http\Requests\PortfolioUpdateRequest::class
-        );
-    }
+    $response = $this->put(route('portfolios.update', $portfolio), [
+        'user_id' => $user->id,
+        'name' => $name,
+    ]);
 
-    #[Test]
-    public function update_behaves_as_expected(): void
-    {
-        $portfolio = Portfolio::factory()->create();
-        $user = User::factory()->create();
-        $name = $this->faker->name();
+    $portfolio->refresh();
 
-        $response = $this->put(route('portfolios.update', $portfolio), [
-            'user_id' => $user->id,
-            'name' => $name,
-        ]);
+    $response->assertOk();
+    $response->assertJsonStructure([]);
 
-        $portfolio->refresh();
+    expect($portfolio->user_id)->toBe($user->id);
+    expect($portfolio->name)->toBe($name);
+});
 
-        $response->assertOk();
-        $response->assertJsonStructure([]);
+test('destroy deletes and responds with no content', function () {
+    $portfolio = Portfolio::factory()->create();
 
-        $this->assertEquals($user->id, $portfolio->user_id);
-        $this->assertEquals($name, $portfolio->name);
-    }
+    $response = $this->delete(route('portfolios.destroy', $portfolio));
 
+    $response->assertNoContent();
 
-    #[Test]
-    public function destroy_deletes_and_responds_with(): void
-    {
-        $portfolio = Portfolio::factory()->create();
-
-        $response = $this->delete(route('portfolios.destroy', $portfolio));
-
-        $response->assertNoContent();
-
-        $this->assertModelMissing($portfolio);
-    }
-}
+    $this->assertModelMissing($portfolio);
+});
