@@ -13,7 +13,6 @@ class PortfolioPolicy
      */
     public function viewAny(User $user): bool
     {
-        // Users can view their own portfolios
         return true;
     }
 

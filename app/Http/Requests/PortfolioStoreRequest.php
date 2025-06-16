@@ -20,7 +20,7 @@ class PortfolioStoreRequest extends FormRequest
     public function rules(): array
     {
         return [
-            // user_id is automatically assigned from authenticated user - no validation needed
+            // user_id is automatically assigned from authenticated user
             'name' => ['required', 'string', 'max:255'],
         ];
     }

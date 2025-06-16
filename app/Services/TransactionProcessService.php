@@ -11,8 +11,12 @@ use App\Models\Portfolio;
 use App\Models\PortfolioHistory;
 use App\Models\Transaction;
 use Illuminate\Auth\Access\AuthorizationException;
+use Illuminate\Contracts\Auth\Authenticatable;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
+use Symfony\Component\HttpFoundation\Response;
 
 /**
  * Service class for processing transaction-related operations.
@@ -74,11 +78,11 @@ class TransactionProcessService
      * Handles database transaction, portfolio history, and insufficient balance scenarios.
      *
      * @param array $validatedData Validated transaction data
-     * @param \Illuminate\Contracts\Auth\Authenticatable $user The authenticated user
+     * @param Authenticatable $user The authenticated user
      * @return TransactionResource The created transaction resource
      * @throws InsufficientBalanceException When insufficient balance for sell transactions
      */
-    public function createTransactionWithValidation(array $validatedData, $user): TransactionResource
+    public function createTransactionWithValidation(array $validatedData, Authenticatable $user): TransactionResource
     {
         return DB::transaction(function () use ($validatedData, $user) {
             // Validate portfolio ownership
@@ -114,10 +118,10 @@ class TransactionProcessService
     /**
      * Builds the base query for retrieving user's transactions.
      *
-     * @param \Illuminate\Contracts\Auth\Authenticatable $user The authenticated user
-     * @return \Illuminate\Database\Eloquent\Builder Transaction query builder
+     * @param Authenticatable $user The authenticated user
+     * @return Builder Transaction query builder
      */
-    private function buildUserTransactionQuery($user)
+    private function buildUserTransactionQuery(Authenticatable $user): Builder
     {
         return Transaction::whereHas('portfolio', function ($query) use ($user) {
             $query->where('user_id', $user->id);
@@ -128,18 +132,18 @@ class TransactionProcessService
      * Validates that a portfolio belongs to the authenticated user.
      *
      * @param int $portfolioId The portfolio ID to validate
-     * @param \Illuminate\Contracts\Auth\Authenticatable $user The authenticated user
+     * @param Authenticatable $user The authenticated user
      * @return Portfolio The validated portfolio
-     * @throws \Illuminate\Auth\Access\AuthorizationException When portfolio doesn't belong to user
+     * @throws AuthorizationException When portfolio doesn't belong to user
      */
-    private function validateUserPortfolio(int $portfolioId, $user): Portfolio
+    private function validateUserPortfolio(int $portfolioId, Authenticatable $user): Portfolio
     {
         $portfolio = Portfolio::where('id', $portfolioId)
             ->where('user_id', $user->id)
             ->first();
 
         if (!$portfolio) {
-            abort(403, 'Access denied. This portfolio does not belong to you.');
+            abort(Response::HTTP_FORBIDDEN, 'Access denied. This portfolio does not belong to you.');
         }
 
         return $portfolio;
@@ -148,10 +152,10 @@ class TransactionProcessService
     /**
      * Calculates transaction totals including bought, sold, and net position.
      *
-     * @param \Illuminate\Support\Collection $transactions Collection of transactions
+     * @param Collection $transactions Collection of transactions
      * @return array Array containing transaction totals
      */
-    private function calculateTransactionTotals($transactions): array
+    private function calculateTransactionTotals(Collection $transactions): array
     {
         $totalBought = 0;
         $totalSold = 0;
@@ -159,9 +163,9 @@ class TransactionProcessService
         foreach ($transactions as $transaction) {
             $amount = $transaction->quantity * $transaction->buy_price;
 
-            if ($transaction->transaction_type === 'buy') {
+            if ($transaction->transaction_type === TransactionTypeEnum::BUY) {
                 $totalBought += $amount;
-            } elseif ($transaction->transaction_type === 'sell') {
+            } elseif ($transaction->transaction_type === TransactionTypeEnum::SELL) {
                 $totalSold += $amount;
             }
         }
@@ -203,8 +207,8 @@ class TransactionProcessService
         }
 
         // Calculate metrics from transactions
-        $buyTransactions = $transactions->where('transaction_type', 'buy');
-        $sellTransactions = $transactions->where('transaction_type', 'sell');
+        $buyTransactions = $transactions->where('transaction_type', TransactionTypeEnum::BUY);
+        $sellTransactions = $transactions->where('transaction_type', TransactionTypeEnum::SELL);
 
         $totalBuyQuantity = $buyTransactions->sum('quantity');
         $totalBuyValue = $buyTransactions->sum(function($t) {

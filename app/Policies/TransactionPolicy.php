@@ -13,7 +13,6 @@ class TransactionPolicy
      */
     public function viewAny(User $user): bool
     {
-        // Users can view their own transactions
         return true;
     }
 
