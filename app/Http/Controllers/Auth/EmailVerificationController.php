@@ -4,17 +4,18 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use Exception;
 use Illuminate\Auth\Events\Verified;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\URL;
+use Symfony\Component\HttpFoundation\Response;
 
 class EmailVerificationController extends Controller
 {
     /**
      * Verify email address
      */
-    public function verify(Request $request, $id, $hash): JsonResponse
+    public function verify($id, $hash): JsonResponse
     {
         try {
             $user = User::findOrFail($id);
@@ -23,14 +24,14 @@ class EmailVerificationController extends Controller
             if (!hash_equals((string) $hash, sha1($user->getEmailForVerification()))) {
                 return response()->json([
                     'message' => 'Invalid verification link.',
-                ], 400);
+                ], Response::HTTP_BAD_REQUEST);
             }
 
             // Check if email is already verified
             if ($user->hasVerifiedEmail()) {
                 return response()->json([
                     'message' => 'Email address is already verified.',
-                ], 200);
+                ]);
             }
 
             // Mark email as verified
@@ -48,13 +49,13 @@ class EmailVerificationController extends Controller
                     'email' => $user->email,
                     'email_verified_at' => $user->email_verified_at,
                 ],
-            ], 200);
+            ]);
 
         } catch (\Exception $e) {
             return response()->json([
                 'message' => 'Email verification failed.',
                 'error' => $e->getMessage(),
-            ], 500);
+            ], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -70,7 +71,7 @@ class EmailVerificationController extends Controller
             if ($user->hasVerifiedEmail()) {
                 return response()->json([
                     'message' => 'Email address is already verified.',
-                ], 200);
+                ]);
             }
 
             // Send verification email
@@ -78,13 +79,13 @@ class EmailVerificationController extends Controller
 
             return response()->json([
                 'message' => 'Verification email sent successfully.',
-            ], 200);
+            ]);
 
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             return response()->json([
                 'message' => 'Failed to send verification email.',
                 'error' => $e->getMessage(),
-            ], 500);
+            ], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -100,13 +101,13 @@ class EmailVerificationController extends Controller
                 'verified' => $user->hasVerifiedEmail(),
                 'email' => $user->email,
                 'verified_at' => $user->email_verified_at,
-            ], 200);
+            ]);
 
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             return response()->json([
                 'message' => 'Failed to check verification status.',
                 'error' => $e->getMessage(),
-            ], 500);
+            ], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
 }

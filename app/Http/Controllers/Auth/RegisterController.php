@@ -5,11 +5,13 @@ namespace App\Http\Controllers\Auth;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Rules\PasswordComplexity;
+use Exception;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\ValidationException;
+use Symfony\Component\HttpFoundation\Response;
 
 class RegisterController extends Controller
 {
@@ -51,18 +53,18 @@ class RegisterController extends Controller
                     'email_verified_at' => $user->email_verified_at,
                 ],
                 'token' => $token,
-            ], 201);
+            ], Response::HTTP_CREATED);
 
         } catch (ValidationException $e) {
             return response()->json([
                 'message' => 'Validation failed',
                 'errors' => $e->errors(),
-            ], 422);
-        } catch (\Exception $e) {
+            ], Response::HTTP_UNPROCESSABLE_ENTITY);
+        } catch (Exception $e) {
             return response()->json([
                 'message' => 'Registration failed',
                 'error' => $e->getMessage(),
-            ], 500);
+            ], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
 }

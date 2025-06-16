@@ -6,10 +6,10 @@ use App\Http\Controllers\Controller;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Validation\ValidationException;
+use Symfony\Component\HttpFoundation\Response;
 
 class LoginController extends Controller
 {
@@ -31,7 +31,7 @@ class LoginController extends Controller
                 $seconds = RateLimiter::availableIn($key);
                 return response()->json([
                     'message' => 'Too many login attempts. Please try again in ' . $seconds . ' seconds.',
-                ], 429);
+                ], Response::HTTP_TOO_MANY_REQUESTS);
             }
 
             // Find user by email
@@ -40,13 +40,13 @@ class LoginController extends Controller
             // Check credentials
             if (!$user || !Hash::check($validated['password'], $user->password)) {
                 RateLimiter::hit($key, 60); // Lock for 1 minute
-                
+
                 return response()->json([
                     'message' => 'The provided credentials are incorrect.',
                     'errors' => [
                         'email' => ['The provided credentials are incorrect.']
                     ]
-                ], 422);
+                ], Response::HTTP_UNPROCESSABLE_ENTITY);
             }
 
             // Clear rate limiting on successful login
@@ -55,7 +55,7 @@ class LoginController extends Controller
             // Create token with appropriate expiration
             $tokenName = 'auth-token';
             $expiresAt = $validated['remember'] ?? false ? now()->addDays(30) : now()->addDay();
-            
+
             $token = $user->createToken($tokenName, ['*'], $expiresAt)->plainTextToken;
 
             return response()->json([
@@ -69,18 +69,18 @@ class LoginController extends Controller
                     'email_verified_at' => $user->email_verified_at,
                 ],
                 'token' => $token,
-            ], 200);
+            ]);
 
         } catch (ValidationException $e) {
             return response()->json([
                 'message' => 'Validation failed',
                 'errors' => $e->errors(),
-            ], 422);
+            ], Response::HTTP_UNPROCESSABLE_ENTITY);
         } catch (\Exception $e) {
             return response()->json([
                 'message' => 'Login failed',
                 'error' => $e->getMessage(),
-            ], 500);
+            ], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -95,13 +95,13 @@ class LoginController extends Controller
 
             return response()->json([
                 'message' => 'Logout successful',
-            ], 200);
+            ]);
 
         } catch (\Exception $e) {
             return response()->json([
                 'message' => 'Logout failed',
                 'error' => $e->getMessage(),
-            ], 500);
+            ], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -122,7 +122,7 @@ class LoginController extends Controller
             return response()->json([
                 'message' => 'Logout from all devices failed',
                 'error' => $e->getMessage(),
-            ], 500);
+            ], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -143,13 +143,13 @@ class LoginController extends Controller
                     'email' => $user->email,
                     'email_verified_at' => $user->email_verified_at,
                 ],
-            ], 200);
+            ]);
 
         } catch (\Exception $e) {
             return response()->json([
                 'message' => 'Failed to retrieve user data',
                 'error' => $e->getMessage(),
-            ], 500);
+            ], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
 }

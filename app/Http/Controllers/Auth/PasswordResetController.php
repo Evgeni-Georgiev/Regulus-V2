@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
+use Symfony\Component\HttpFoundation\Response;
 
 class PasswordResetController extends Controller
 {
@@ -26,12 +27,12 @@ class PasswordResetController extends Controller
 
             // Check if user exists
             $user = User::where('email', $validated['email'])->first();
-            
+
             if (!$user) {
                 // Don't reveal if email exists or not for security
                 return response()->json([
                     'message' => 'If an account with that email exists, we have sent a password reset link.',
-                ], 200);
+                ]);
             }
 
             // Send password reset link
@@ -40,23 +41,23 @@ class PasswordResetController extends Controller
             if ($status === Password::RESET_LINK_SENT) {
                 return response()->json([
                     'message' => 'Password reset link sent to your email address.',
-                ], 200);
+                ]);
             }
 
             return response()->json([
                 'message' => 'Unable to send password reset link. Please try again.',
-            ], 500);
+            ], Response::HTTP_INTERNAL_SERVER_ERROR);
 
         } catch (ValidationException $e) {
             return response()->json([
                 'message' => 'Validation failed',
                 'errors' => $e->errors(),
-            ], 422);
+            ], Response::HTTP_UNPROCESSABLE_ENTITY);
         } catch (\Exception $e) {
             return response()->json([
                 'message' => 'Failed to send password reset link.',
                 'error' => $e->getMessage(),
-            ], 500);
+            ], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -90,7 +91,7 @@ class PasswordResetController extends Controller
             if ($status === Password::PASSWORD_RESET) {
                 return response()->json([
                     'message' => 'Password reset successfully. Please login with your new password.',
-                ], 200);
+                ]);
             }
 
             // Handle different error cases
@@ -105,18 +106,18 @@ class PasswordResetController extends Controller
                 'errors' => [
                     'email' => [$message]
                 ]
-            ], 422);
+            ], Response::HTTP_UNPROCESSABLE_ENTITY);
 
         } catch (ValidationException $e) {
             return response()->json([
                 'message' => 'Validation failed',
                 'errors' => $e->errors(),
-            ], 422);
+            ], Response::HTTP_UNPROCESSABLE_ENTITY);
         } catch (\Exception $e) {
             return response()->json([
                 'message' => 'Password reset failed.',
                 'error' => $e->getMessage(),
-            ], 500);
+            ], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -141,7 +142,7 @@ class PasswordResetController extends Controller
                     'errors' => [
                         'current_password' => ['Current password is incorrect.']
                     ]
-                ], 422);
+                ], Response::HTTP_UNPROCESSABLE_ENTITY);
             }
 
             // Update password
@@ -156,18 +157,18 @@ class PasswordResetController extends Controller
 
             return response()->json([
                 'message' => 'Password changed successfully.',
-            ], 200);
+            ]);
 
         } catch (ValidationException $e) {
             return response()->json([
                 'message' => 'Validation failed',
                 'errors' => $e->errors(),
-            ], 422);
+            ], Response::HTTP_UNPROCESSABLE_ENTITY);
         } catch (\Exception $e) {
             return response()->json([
                 'message' => 'Password change failed.',
                 'error' => $e->getMessage(),
-            ], 500);
+            ], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
 }
