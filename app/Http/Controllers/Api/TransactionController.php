@@ -23,14 +23,38 @@ use Illuminate\Support\Facades\Log;
 
 class TransactionController extends Controller
 {
+    public function __construct()
+    {
+        // Middleware is already applied at the route level
+    }
+
     public function index(Request $request): TransactionCollection
     {
         try {
-            $query = Transaction::query();
+            // Use policy authorization
+            $this->authorize('viewAny', Transaction::class);
             
-            // Filter by portfolio_id if provided
+            $user = $request->user();
+            
+            // Start with transactions that belong to portfolios owned by the authenticated user
+            $query = Transaction::whereHas('portfolio', function ($query) use ($user) {
+                $query->where('user_id', $user->id);
+            });
+            
+            // Filter by portfolio_id if provided (but still ensure it belongs to the user)
             if ($request->has('portfolio_id')) {
-                $query->where('portfolio_id', $request->input('portfolio_id'));
+                $portfolioId = $request->input('portfolio_id');
+                
+                // Verify the portfolio belongs to the authenticated user
+                $portfolio = Portfolio::where('id', $portfolioId)
+                    ->where('user_id', $user->id)
+                    ->first();
+                
+                if (!$portfolio) {
+                    abort(403, 'Access denied. This portfolio does not belong to you.');
+                }
+                
+                $query->where('portfolio_id', $portfolioId);
             }
             
             // Filter by coin_id if provided
@@ -63,7 +87,7 @@ class TransactionController extends Controller
             $totalHoldingQuantity = 0;
             
             if ($request->has('portfolio_id') && $request->has('coin_id')) {
-                // Get the coin data for this portfolio
+                // Get the coin data for this portfolio (already verified above)
                 $portfolio = Portfolio::find($request->input('portfolio_id'));
                 if ($portfolio) {
                     $coin = $portfolio->coins()
@@ -99,6 +123,7 @@ class TransactionController extends Controller
                 
         } catch (\Exception $e) {
             Log::error('Error in TransactionController@index: ' . $e->getMessage(), [
+                'user_id' => $request->user()->id ?? null,
                 'portfolio_id' => $request->input('portfolio_id'),
                 'coin_id' => $request->input('coin_id'),
                 'trace' => $e->getTraceAsString()
@@ -127,8 +152,21 @@ class TransactionController extends Controller
     public function store(TransactionStoreRequest $request): TransactionResource
     {
         try {
+            // Use policy authorization
+            $this->authorize('create', Transaction::class);
+            
             return DB::transaction(function () use ($request) {
-                $portfolio = Portfolio::where('id', $request->input('portfolio_id'))->first();
+                $user = $request->user();
+                $portfolioId = $request->input('portfolio_id');
+                
+                // Verify the portfolio belongs to the authenticated user
+                $portfolio = Portfolio::where('id', $portfolioId)
+                    ->where('user_id', $user->id)
+                    ->first();
+                
+                if (!$portfolio) {
+                    abort(403, 'Access denied. This portfolio does not belong to you.');
+                }
 
                 $portfolioService = app(PortfolioService::class)
                     ->loadPortfolio($portfolio)
@@ -175,11 +213,17 @@ class TransactionController extends Controller
 
     public function show(Request $request, Transaction $transaction): TransactionResource
     {
+        // Use policy authorization - this will check if transaction belongs to user's portfolio
+        $this->authorize('view', $transaction);
+
         return new TransactionResource($transaction);
     }
 
     public function update(TransactionUpdateRequest $request, Transaction $transaction): TransactionResource
     {
+        // Use policy authorization - this will check if transaction belongs to user's portfolio
+        $this->authorize('update', $transaction);
+
         $transaction->update($request->validated());
 
         return new TransactionResource($transaction);
@@ -187,6 +231,9 @@ class TransactionController extends Controller
 
     public function destroy(Request $request, Transaction $transaction): Response
     {
+        // Use policy authorization - this will check if transaction belongs to user's portfolio
+        $this->authorize('delete', $transaction);
+
         $transaction->delete();
 
         return response()->noContent();
