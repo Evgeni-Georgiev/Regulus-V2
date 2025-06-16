@@ -20,7 +20,6 @@ class PortfolioUpdateRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'user_id' => ['required', 'integer', 'exists:Users,id'],
             'name' => ['required', 'string', 'max:255'],
         ];
     }
