@@ -13,9 +13,11 @@ use JMac\Testing\Traits\AdditionalAssertions;
 uses(RefreshDatabase::class, WithFaker::class, AdditionalAssertions::class);
 
 test('index behaves as expected', function () {
-    $portfolios = Portfolio::factory()->count(3)->create();
+    $user = User::factory()->create();
+    $portfolios = Portfolio::factory()->count(3)->create(['user_id' => $user->id]);
 
-    $response = $this->get(route('portfolios.index'));
+    $response = $this->actingAs($user, 'sanctum')
+        ->get(route('portfolios.index'));
 
     $response->assertOk();
     $response->assertJsonStructure([]);
@@ -33,10 +35,10 @@ test('store saves', function () {
     $user = User::factory()->create();
     $name = fake()->name();
 
-    $response = $this->post(route('portfolios.store'), [
-        'user_id' => $user->id,
-        'name' => $name,
-    ]);
+    $response = $this->actingAs($user, 'sanctum')
+        ->post(route('portfolios.store'), [
+            'name' => $name,
+        ]);
 
     $portfolios = Portfolio::query()
         ->where('user_id', $user->id)
@@ -50,9 +52,11 @@ test('store saves', function () {
 });
 
 test('show behaves as expected', function () {
-    $portfolio = Portfolio::factory()->create();
+    $user = User::factory()->create();
+    $portfolio = Portfolio::factory()->create(['user_id' => $user->id]);
 
-    $response = $this->get(route('portfolios.show', $portfolio));
+    $response = $this->actingAs($user, 'sanctum')
+        ->get(route('portfolios.show', $portfolio));
 
     $response->assertOk();
     $response->assertJsonStructure([]);
@@ -67,14 +71,14 @@ test('update uses form request validation', function () {
 });
 
 test('update behaves as expected', function () {
-    $portfolio = Portfolio::factory()->create();
     $user = User::factory()->create();
+    $portfolio = Portfolio::factory()->create(['user_id' => $user->id]);
     $name = fake()->name();
 
-    $response = $this->put(route('portfolios.update', $portfolio), [
-        'user_id' => $user->id,
-        'name' => $name,
-    ]);
+    $response = $this->actingAs($user, 'sanctum')
+        ->put(route('portfolios.update', $portfolio), [
+            'name' => $name,
+        ]);
 
     $portfolio->refresh();
 
@@ -86,9 +90,11 @@ test('update behaves as expected', function () {
 });
 
 test('destroy deletes and responds with no content', function () {
-    $portfolio = Portfolio::factory()->create();
+    $user = User::factory()->create();
+    $portfolio = Portfolio::factory()->create(['user_id' => $user->id]);
 
-    $response = $this->delete(route('portfolios.destroy', $portfolio));
+    $response = $this->actingAs($user, 'sanctum')
+        ->delete(route('portfolios.destroy', $portfolio));
 
     $response->assertNoContent();
 

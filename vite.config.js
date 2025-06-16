@@ -30,6 +30,28 @@ export default defineConfig({
             },
         }),
     ],
+    server: {
+        host: '0.0.0.0',
+        port: 5179,
+        hmr: {
+            host: 'localhost',
+            port: 5179,
+        },
+        cors: {
+            origin: [
+                'http://localhost',
+                'http://localhost:80', 
+                'http://localhost:89',
+                'http://127.0.0.1', 
+                'http://127.0.0.1:80',
+                'http://regulus.local'
+            ],
+            credentials: true,
+        },
+        watch: {
+            usePolling: true,
+        },
+    },
     build: {
         rollupOptions: {
             external: ['axios'], // Add axios here
