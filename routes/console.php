@@ -16,3 +16,4 @@ Schedule::command(CoinFetch::class)->everyFifteenSeconds();
 Schedule::job(new UpdateCoinPriceJob())->everyFiveMinutes();
 Schedule::job(new SyncCoinDataJob())->everyOddHour();
 Schedule::job(new RecordPortfolioSnapshotJob())->everyThirtySeconds();
+Schedule::command('exchange:sync')->hourly();
