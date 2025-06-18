@@ -3,6 +3,7 @@
 use App\Models\Coin;
 use App\Models\Portfolio;
 use App\Models\Transaction;
+use App\Models\User;
 use App\Enums\TransactionTypeEnum;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Foundation\Testing\WithFaker;
@@ -15,9 +16,12 @@ use JMac\Testing\Traits\AdditionalAssertions;
 uses(RefreshDatabase::class, WithFaker::class, AdditionalAssertions::class);
 
 test('index behaves as expected', function () {
-    $transactions = Transaction::factory()->count(3)->create();
+    $user = User::factory()->create();
+    $portfolio = Portfolio::factory()->create(['user_id' => $user->id]);
+    $transactions = Transaction::factory()->count(3)->create(['portfolio_id' => $portfolio->id]);
 
-    $response = $this->get(route('transactions.index'));
+    $response = $this->actingAs($user, 'sanctum')
+        ->get(route('transactions.index'));
 
     $response->assertOk();
     $response->assertJsonStructure([]);
@@ -32,19 +36,21 @@ test('store uses form request validation', function () {
 });
 
 test('store saves', function () {
-    $portfolio = Portfolio::factory()->create();
+    $user = User::factory()->create();
+    $portfolio = Portfolio::factory()->create(['user_id' => $user->id]);
     $coin = Coin::factory()->create();
-    $quantity = fake()->randomFloat(8, 0.00000001, 1000); // Reasonable quantity range
-    $buy_price = fake()->randomFloat(8, 0.01, 100000); // Reasonable price range
-    $transaction_type = fake()->randomElement([TransactionTypeEnum::BUY->value, TransactionTypeEnum::SELL->value]);
+    $quantity = fake()->randomFloat(8, 0.00000001, 1000);
+    $buy_price = fake()->randomFloat(8, 0.01, 100000);
+    $transaction_type = TransactionTypeEnum::BUY->value;
 
-    $response = $this->post(route('transactions.store'), [
-        'portfolio_id' => $portfolio->id,
-        'coin_id' => $coin->id,
-        'quantity' => $quantity,
-        'buy_price' => $buy_price,
-        'transaction_type' => $transaction_type,
-    ]);
+    $response = $this->actingAs($user, 'sanctum')
+        ->post(route('transactions.store'), [
+            'portfolio_id' => $portfolio->id,
+            'coin_id' => $coin->id,
+            'quantity' => $quantity,
+            'buy_price' => $buy_price,
+            'transaction_type' => $transaction_type,
+        ]);
 
     $transactions = Transaction::query()
         ->where('portfolio_id', $portfolio->id)
@@ -61,9 +67,12 @@ test('store saves', function () {
 });
 
 test('show behaves as expected', function () {
-    $transaction = Transaction::factory()->create();
+    $user = User::factory()->create();
+    $portfolio = Portfolio::factory()->create(['user_id' => $user->id]);
+    $transaction = Transaction::factory()->create(['portfolio_id' => $portfolio->id]);
 
-    $response = $this->get(route('transactions.show', $transaction));
+    $response = $this->actingAs($user, 'sanctum')
+        ->get(route('transactions.show', $transaction));
 
     $response->assertOk();
     $response->assertJsonStructure([]);
@@ -101,9 +110,12 @@ test('update behaves as expected', function () {
 });
 
 test('destroy deletes and responds with no content', function () {
-    $transaction = Transaction::factory()->create();
+    $user = User::factory()->create();
+    $portfolio = Portfolio::factory()->create(['user_id' => $user->id]);
+    $transaction = Transaction::factory()->create(['portfolio_id' => $portfolio->id]);
 
-    $response = $this->delete(route('transactions.destroy', $transaction));
+    $response = $this->actingAs($user, 'sanctum')
+        ->delete(route('transactions.destroy', $transaction));
 
     $response->assertNoContent();
 

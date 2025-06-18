@@ -9,7 +9,7 @@ use App\Enums\TransactionTypeEnum;
 describe('Coin Relationships Feature Tests', function () {
     test('can create complete coin portfolio ecosystem', function () {
         // Create user and portfolio
-        $user = User::factory()->create(['name' => 'John Doe']);
+        $user = User::factory()->create(['first_name' => 'John', 'last_name' => 'Doe']);
         $portfolio = Portfolio::factory()->create([
             'user_id' => $user->id,
             'name' => 'My Crypto Portfolio'
@@ -54,7 +54,7 @@ describe('Coin Relationships Feature Tests', function () {
             ->and($portfolio->coins->pluck('symbol')->toArray())->toContain('BTC', 'ETH')
             ->and($portfolio->transactions)->toHaveCount(2)
             ->and($bitcoin->portfolios->first()->name)->toBe('My Crypto Portfolio')
-            ->and($ethereum->portfolios->first()->user->name)->toBe('John Doe');
+            ->and($ethereum->portfolios->first()->user->full_name)->toBe('John Doe');
     });
 
     test('can handle multiple portfolios owning same coin', function () {
