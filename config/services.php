@@ -38,6 +38,8 @@ return [
     'cmc' => [
         'api_url' => env('CMC_API_URL'),
         'api_key' => env('CMC_API_KEY'),
+        'fresh_data_fetch_time' => env('CMC_FRESH_DATA_FETCH_TIME', 15),
+        'cache_data_time' => env('CMC_CACHE_DATA_TIME', 15),
     ],
 
 ];

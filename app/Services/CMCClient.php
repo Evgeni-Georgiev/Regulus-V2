@@ -34,10 +34,14 @@ class CMCClient
         'API_CACHED_DATA' => 'cmc.api.cached.data',
     ];
 
-    private const CACHE_DURATIONS = [
-        'FRESH_DATA' => 15, // 15 seconds for fresh API data to be cached
-        'CACHED_DATA' => 300, // 5 minutes for cached API data to be cached
-    ];
+    private function CACHE_DURATIONS(): array
+    {
+        return [
+            'FRESH_DATA' => config('services.cmc.fresh_data_fetch_time', 15),
+            'CACHED_DATA' => config('services.cmc.cache_data_time', 15),
+        ];
+    }
+
 
     /**
      * Gets the status of the last response.
@@ -138,14 +142,14 @@ class CMCClient
                 cache()->put(
                     self::CACHE_KEYS['API_FRESH_DATA'],
                     $freshData,
-                    self::CACHE_DURATIONS['FRESH_DATA']
+                    $this->CACHE_DURATIONS()['FRESH_DATA']
                 );
 
                 // Cache as backup data (longer duration)
                 cache()->put(
                     self::CACHE_KEYS['API_CACHED_DATA'],
                     $freshData,
-                    self::CACHE_DURATIONS['CACHED_DATA']
+                    $this->CACHE_DURATIONS()['CACHED_DATA']
                 );
 
                 ApiFetchLog::create([

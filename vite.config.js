@@ -32,10 +32,12 @@ export default defineConfig({
     ],
     server: {
         host: '0.0.0.0',
-        port: 5179,
+        port: process.env.VITE_PORT || 5180,
+        strictPort: true,
         hmr: {
             host: 'localhost',
-            port: 5179,
+            port: process.env.VITE_HMR_PORT || 5180,
+            protocol: 'ws',
         },
         cors: {
             origin: [
@@ -44,7 +46,9 @@ export default defineConfig({
                 'http://localhost:89',
                 'http://127.0.0.1', 
                 'http://127.0.0.1:80',
-                'http://regulus.local'
+                'http://127.0.0.1:89',
+                'http://regulus.local',
+                'http://regulus.local:89'
             ],
             credentials: true,
         },
