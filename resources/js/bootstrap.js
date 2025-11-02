@@ -10,4 +10,10 @@ axios.defaults.baseURL = import.meta.env.VITE_APP_URL || 'http://regulus.local';
  * allow your team to quickly build robust real-time web applications.
  */
 
-import './echo';
+import echo from './echo';
+
+// Ensure Echo is globally available
+window.Echo = echo;
+
+// Log for debugging
+console.log('Bootstrap loaded, Echo available:', !!window.Echo);

@@ -129,14 +129,29 @@ const fetchCoins = async () => {
 
 // Listen for broadcasted events
 const listenForPriceUpdates = () => {
+    console.log('Setting up listener for my-channel...');
+
     echo.channel('my-channel').listen('.my-event', (event) => {
+        console.log('📡 Broadcast event received!', {
+            eventKeys: Object.keys(event),
+            coinCount: event.coinData ? Object.keys(event.coinData).length : 0,
+            firstCoin: event.coinData ? Object.keys(event.coinData)[0] : 'none'
+        });
+
         const updatedCoinsArray = Object.entries(event.coinData).map(([symbol, data]) => ({
             symbol,
             ...data,
         }));
-        
+
+        console.log('🔄 Updating coin data...', {
+            coinsToUpdate: updatedCoinsArray.length,
+            currentCoinsCount: coinsData.value.length
+        });
+
         updateCoinData(updatedCoinsArray);
         dataSource.value = 'API';
+
+        console.log('✅ Data updated!');
     });
 };
 
