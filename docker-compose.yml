@@ -1,101 +1,108 @@
+version: '3.8'
+
 services:
-    regulus-v2:
-        build:
-            context: './vendor/laravel/sail/runtimes/8.4'
-            dockerfile: Dockerfile
-            args:
-                WWWGROUP: '${WWWGROUP}'
-        image: 'regulus-v2'
-        extra_hosts:
-            - 'host.docker.internal:host-gateway'
-        ports:
-            - '${APP_PORT:-80}:80'
-            - '${VITE_PORT:-5173}:${VITE_PORT:-5173}'
-        environment:
-            WWWUSER: '${WWWUSER}'
-            LARAVEL_SAIL: 1
-            XDEBUG_MODE: '${SAIL_XDEBUG_MODE:-debug,develop,coverage}'
-            XDEBUG_CONFIG: '${SAIL_XDEBUG_CONFIG:-client_host=host.docker.internal}'
-            IGNITION_LOCAL_SITES_PATH: '${PWD}'
-            PHP_IDE_CONFIG: 'serverName=Docker'
-        volumes:
-            - '.:/var/www/html'
-        networks:
-            - sail
-        depends_on:
-            - mysql
-            - redis
-            - soketi
-            - mailpit
-        healthcheck:
-            test: [ "CMD", "curl", "-f", "http://regulus.local" ]
-            interval: 10s
-            timeout: 5s
-            retries: 3
-            start_period: 30s
-    mysql:
-        image: 'mysql:8.3.0'
-        ports:
-            - '${FORWARD_DB_PORT:-3306}:3306'
-        environment:
-            MYSQL_ROOT_PASSWORD: '${DB_PASSWORD}'
-            MYSQL_ROOT_HOST: '%'
-            MYSQL_DATABASE: '${DB_DATABASE}'
-            MYSQL_USER: '${DB_USERNAME}'
-            MYSQL_PASSWORD: '${DB_PASSWORD}'
-            MYSQL_ALLOW_EMPTY_PASSWORD: 1
-        volumes:
-            - 'sail-mysql:/var/lib/mysql'
-            - './vendor/laravel/sail/database/mysql/create-testing-database.sh:/docker-entrypoint-initdb.d/10-create-testing-database.sh'
-        networks:
-            - sail
-        healthcheck:
-            test: [ "CMD", "mysqladmin", "ping", "-p${DB_PASSWORD}" ]
-            interval: 10s
-            timeout: 5s
-            retries: 3
-    redis:
-        image: 'redis:latest'
-        ports:
-            - '${FORWARD_REDIS_PORT:-6379}:6379'
-        volumes:
-            - 'sail-redis:/data'
-        networks:
-            - sail
-        healthcheck:
-            test:
-                - CMD
-                - redis-cli
-                - ping
-            interval: 10s
-            timeout: 5s
-            retries: 3
-            start_period: 30s
-    soketi:
-        image: 'quay.io/soketi/soketi:latest-16-alpine'
-        environment:
-            SOKETI_DEBUG: '${SOKETI_DEBUG:-1}'
-            SOKETI_METRICS_SERVER_PORT: '9601'
-            SOKETI_DEFAULT_APP_ID: '${PUSHER_APP_ID}'
-            SOKETI_DEFAULT_APP_KEY: '${PUSHER_APP_KEY}'
-            SOKETI_DEFAULT_APP_SECRET: '${PUSHER_APP_SECRET}'
-        ports:
-            - '${PUSHER_PORT:-6001}:6001'
-            - '${PUSHER_METRICS_PORT:-9601}:9601'
-        networks:
-            - sail
-    mailpit:
-        image: 'axllent/mailpit:latest'
-        ports:
-            - '${FORWARD_MAILPIT_PORT:-1025}:1025'
-            - '${FORWARD_MAILPIT_DASHBOARD_PORT:-8025}:8025'
-        networks:
-            - sail
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: regulus-app
+    restart: unless-stopped
+    working_dir: /var/www/html
+    volumes:
+      - ./:/var/www/html
+      - ./docker/php/php.ini:/usr/local/etc/php/conf.d/custom.ini
+      - ./docker/php/xdebug.ini:/usr/local/etc/php/conf.d/docker-php-ext-xdebug.ini
+    environment:
+      - PHP_IDE_CONFIG=serverName=regulus.local
+      - XDEBUG_MODE=${XDEBUG_MODE:-off}
+      - XDEBUG_CONFIG=client_host=host.docker.internal
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    networks:
+      - regulus
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  nginx:
+    image: nginx:alpine
+    container_name: regulus-nginx
+    restart: unless-stopped
+    ports:
+      - "${APP_PORT:-80}:80"
+      - "${VITE_PORT:-5173}:5173"
+    volumes:
+      - ./:/var/www/html
+      - ./docker/nginx/default.conf:/etc/nginx/conf.d/default.conf
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    networks:
+      - regulus
+    depends_on:
+      - app
+
+  mysql:
+    image: mysql:8.3.0
+    container_name: regulus-mysql
+    restart: unless-stopped
+    ports:
+      - "${FORWARD_DB_PORT:-3306}:3306"
+    environment:
+      MYSQL_DATABASE: ${DB_DATABASE:-regulus_app_v2}
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD:-secret}
+      MYSQL_PASSWORD: ${DB_PASSWORD:-secret}
+      MYSQL_USER: ${DB_USERNAME:-regulus}
+      MYSQL_ALLOW_EMPTY_PASSWORD: "yes"
+    volumes:
+      - mysql-data:/var/lib/mysql
+      - ./docker/mysql/init:/docker-entrypoint-initdb.d
+    networks:
+      - regulus
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-p${DB_PASSWORD:-secret}"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+
+  redis:
+    image: redis:alpine
+    container_name: regulus-redis
+    restart: unless-stopped
+    ports:
+      - "${FORWARD_REDIS_PORT:-6379}:6379"
+    volumes:
+      - redis-data:/data
+    networks:
+      - regulus
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  soketi:
+    image: quay.io/soketi/soketi:latest-16-alpine
+    container_name: regulus-soketi
+    restart: unless-stopped
+    ports:
+      - "${SOKETI_PORT:-6001}:6001"
+    environment:
+      SOKETI_DEBUG: "${SOKETI_DEBUG:-0}"
+      SOKETI_DEFAULT_APP_ID: "${PUSHER_APP_ID}"
+      SOKETI_DEFAULT_APP_KEY: "${PUSHER_APP_KEY}"
+      SOKETI_DEFAULT_APP_SECRET: "${PUSHER_APP_SECRET}"
+    networks:
+      - regulus
+
 networks:
-    sail:
-        driver: bridge
+  regulus:
+    driver: bridge
+
 volumes:
-    sail-mysql:
-        driver: local
-    sail-redis:
-        driver: local
+  mysql-data:
+    driver: local
+  redis-data:
+    driver: local

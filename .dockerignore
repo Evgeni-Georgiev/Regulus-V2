@@ -1,0 +1,54 @@
+# Dependencies
+/node_modules
+/vendor
+
+# Environment
+.env
+.env.backup
+.env.production
+
+# IDE
+.idea
+.vscode
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Testing
+.phpunit.result.cache
+.phpunit.cache
+/coverage
+
+# Laravel
+/storage/*.key
+/storage/logs/*
+!/storage/logs/.gitkeep
+/public/hot
+/public/storage
+
+# Build artifacts
+/public/build
+/public/css
+/public/js
+/public/mix-manifest.json
+
+# Git
+.git
+.gitignore
+.gitattributes
+
+# Documentation
+README.md
+*.md
+
+# Docker
+docker-compose.yml
+Dockerfile
+.dockerignore
+
+# Other
+*.log
+npm-debug.log
+yarn-error.log
+.phpunit.cache

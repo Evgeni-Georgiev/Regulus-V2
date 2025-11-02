@@ -40,11 +40,12 @@ export default defineConfig({
         cors: {
             origin: [
                 'http://localhost',
-                'http://localhost:80', 
+                'http://localhost:80',
                 'http://localhost:89',
-                'http://127.0.0.1', 
+                'http://127.0.0.1',
                 'http://127.0.0.1:80',
-                'http://regulus.local'
+                'http://regulus.local',
+                'http://regulus.local:89'
             ],
             credentials: true,
         },
@@ -54,7 +55,7 @@ export default defineConfig({
     },
     build: {
         rollupOptions: {
-            external: ['axios'], // Add axios here
+            // axios should be bundled, not external
         },
     },
     resolve: {
